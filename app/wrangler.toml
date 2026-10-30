@@ -1,0 +1,16 @@
+name = "mergewise"
+main = "src/cloudflare/worker.ts"
+compatibility_date = "2025-05-05"
+
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mergewise"
+database_id = "replace-with-d1-database-id"
+
+[vars]
+LLM_BASE_URL = "https://api.deepseek.com"
+LLM_MODEL = "deepseek-chat"
+DEFAULT_THRESHOLD = "80"

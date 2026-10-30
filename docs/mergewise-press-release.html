@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新闻稿 · MergeWise 上线：AI Code Review，先做到"不吵"</title>
+<style>
+:root{
+  --bg:#ffffff; --page:#f6f8fa; --border:#d8dee4; --border-soft:#e9edf1;
+  --text:#1b1f24; --text2:#424a53; --muted:#6b7280;
+  --brand:#6e40c9; --brand-deep:#54309e; --brand-bg:#f3effc; --brand-line:#a371f7;
+  --green:#1a7f37; --green-bg:#dafbe1;
+  --serif:"Noto Serif SC","Songti SC","STSong",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--page);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8;-webkit-font-smoothing:antialiased}
+
+/* ── 顶栏 ── */
+.top{background:#0d1117;color:#e6edf3;position:sticky;top:0;z-index:50;border-bottom:1px solid #21262d}
+.top-in{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 20px}
+.mk{width:26px;height:26px;border-radius:7px;background:linear-gradient(145deg,#6e40c9,#a371f7);display:grid;place-items:center;flex:0 0 auto}
+.mk svg{width:14px;height:14px}
+.bname{font-weight:700;font-size:14.5px;letter-spacing:-.2px}
+.bname span{color:#7d8590;font-weight:400}
+.top-cta{margin-left:auto;font-size:12.5px;font-weight:600;color:#fff;background:#238636;border:1px solid rgba(240,246,252,.12);border-radius:6px;padding:5px 14px;text-decoration:none;transition:.15s}
+.top-cta:hover{background:#2ea043}
+
+/* ── 稿纸 ── */
+.sheet{max-width:880px;margin:26px auto 90px;background:var(--bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(31,35,40,.07);overflow:hidden}
+.inner{padding:44px 56px 48px}
+@media(max-width:680px){.inner{padding:30px 22px 36px}.sheet{margin:12px 10px 80px}}
+
+/* 头部信息 */
+.kicker{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:26px;flex-wrap:wrap}
+.kicker .rel{color:var(--brand);font-weight:700}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--border)}
+
+h1{font-family:var(--serif);font-size:34px;line-height:1.35;font-weight:700;letter-spacing:-.5px;margin-bottom:14px}
+@media(max-width:680px){h1{font-size:26px}}
+.sub{font-family:var(--serif);font-size:17.5px;color:var(--text2);line-height:1.75;margin-bottom:26px}
+.sub b{color:var(--brand-deep)}
+
+.dateline{font-size:12px;color:var(--muted);font-family:var(--mono);padding-bottom:22px;margin-bottom:26px;border-bottom:1px solid var(--border-soft);display:flex;gap:16px;flex-wrap:wrap}
+
+/* 正文 */
+p{margin-bottom:18px;color:var(--text2)}
+p b, p strong{color:var(--text);font-weight:650}
+.lead{font-size:16.5px;color:var(--text);line-height:1.85;margin-bottom:26px}
+.lead b{color:var(--brand-deep)}
+
+h2{font-family:var(--serif);font-size:21px;font-weight:700;letter-spacing:-.3px;margin:38px 0 14px;padding-left:14px;border-left:4px solid var(--brand-line)}
+h3{font-size:15.5px;font-weight:650;margin:22px 0 8px;color:var(--text)}
+
+blockquote{
+  margin:26px 0;padding:18px 22px;background:var(--brand-bg);border-left:4px solid var(--brand-line);
+  border-radius:0 10px 10px 0;font-family:var(--serif);font-size:15.5px;line-height:1.9;color:var(--text)
+}
+blockquote .en{display:block;font-size:13px;color:var(--muted);margin-top:8px;font-style:italic}
+blockquote .src{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+
+/* 三机制卡片 */
+.gates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0 8px}
+@media(max-width:680px){.gates{grid-template-columns:1fr}}
+.gate{border:1px solid var(--border-soft);border-radius:10px;padding:16px 16px 14px;background:linear-gradient(180deg,#fbfcfe,#fff)}
+.gate .gn{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--brand);letter-spacing:.6px;margin-bottom:7px}
+.gate h4{font-size:14.5px;font-weight:650;margin-bottom:6px}
+.gate p{font-size:12.5px;line-height:1.7;color:var(--muted);margin:0}
+
+/* 数据条 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-soft);border:1px solid var(--border-soft);border-radius:10px;overflow:hidden;margin:22px 0}
+@media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fff;padding:16px 14px;text-align:center}
+.stat .v{font-size:26px;font-weight:750;letter-spacing:-1px;color:var(--brand-deep);font-variant-numeric:tabular-nums}
+.stat .k{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+.stat-note{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:-12px;margin-bottom:24px}
+
+/* 引语 */
+.quote{margin:26px 0;padding:0 0 0 18px;border-left:3px solid var(--border)}
+.quote p{font-family:var(--serif);font-size:15.5px;color:var(--text);margin-bottom:6px}
+.quote .who{font-size:12.5px;color:var(--muted)}
+.quote .who b{color:var(--text2)}
+
+/* FAQ */
+.faq{margin:8px 0 6px}
+.faq details{border:1px solid var(--border-soft);border-radius:9px;padding:13px 18px;margin-bottom:9px;background:#fbfcfe}
+.faq summary{font-weight:650;font-size:14.5px;cursor:pointer;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px}
+.faq summary::before{content:"Q";font-family:var(--mono);font-size:11px;color:var(--brand);font-weight:700;border:1px solid var(--brand-line);border-radius:4px;padding:1px 6px}
+.faq details[open] summary{margin-bottom:8px}
+.faq details p{font-size:13.5px;margin:0;padding-left:2px}
+
+/* CTA 大区块 */
+.cta{
+  margin:40px 0 8px;border-radius:14px;padding:34px 34px 30px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(130deg,#241442 0%,#3a1d78 55%,#0d1117 130%);
+}
+.cta::after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(163,113,247,.35),transparent 70%)}
+.cta h2{border:none;padding:0;margin:0 0 10px;font-size:24px;color:#fff}
+.cta p{color:#c9b8ec;font-size:14px;margin-bottom:22px;max-width:560px}
+.cta p b{color:#fff}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:650;font-size:14.5px;
+  padding:12px 26px;border-radius:9px;transition:.16s;
+}
+.btn.pri{background:#a371f7;color:#1a0b33;box-shadow:0 6px 22px rgba(163,113,247,.4)}
+.btn.pri:hover{background:#b98cf9;transform:translateY(-1px)}
+.btn.sec{background:rgba(255,255,255,.08);color:#e6e1f5;border:1px solid rgba(230,225,245,.3)}
+.btn.sec:hover{background:rgba(255,255,255,.15)}
+.cta-side{display:flex;align-items:center;gap:14px;margin-left:auto}
+.qr{width:76px;height:76px;border-radius:9px;background:#fff;display:grid;place-items:center;color:#9aa4b2;font-size:10px;font-family:var(--mono);text-align:center;line-height:1.4;flex:0 0 auto}
+.cta-note{font-size:11.5px;color:#8d7bb8;margin-top:16px;font-family:var(--mono)}
+
+/* About / 媒体联系 */
+.about{margin-top:36px;padding-top:22px;border-top:1px solid var(--border-soft)}
+.about h3{margin-top:0}
+.about p{font-size:13px}
+.contact{display:flex;gap:26px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:14px}
+.contact b{color:var(--text2)}
+.contact code{font-family:var(--mono);font-size:12px;background:var(--page);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;color:var(--text2)}
+
+.end{margin-top:30px;text-align:center;font-family:var(--serif);color:var(--muted);font-size:13px;letter-spacing:.4em}
+
+/* 粘底 CTA */
+.bar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(13,17,23,.92);backdrop-filter:blur(8px);border-top:1px solid #21262d;transform:translateY(100%);transition:.3s;animation:barin .4s .8s forwards}
+@keyframes barin{to{transform:none}}
+.bar-in{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 20px}
+.bar .t{color:#e6edf3;font-size:13px}
+.bar .t b{color:#a371f7}
+.bar a{margin-left:auto;font-size:12.5px;font-weight:650;color:#fff;background:#238636;border-radius:6px;padding:6px 16px;text-decoration:none}
+.bar a:hover{background:#2ea043}
+.bar .ghostlink{color:#8b949e;font-size:12px;text-decoration:none;margin-left:0}
+@media(max-width:680px){.bar .t span.hidemobile{display:none}.bar .ghostlink{display:none}}
+
+/* toast */
+#toast{position:fixed;bottom:64px;left:50%;transform:translate(-50%,20px);opacity:0;background:#1f2a37;border:1px solid rgba(163,113,247,.5);color:#e6edf3;border-radius:9px;padding:10px 16px;font-size:13px;z-index:99;transition:.25s;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="top"><div class="top-in">
+  <div class="mk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+  <div class="bname">MergeWise<span> · AI Code Review</span></div>
+  <a class="top-cta" href="#consult">预约演示</a>
+</div></div>
+
+<!-- 稿纸 -->
+<div class="sheet"><div class="inner">
+
+  <div class="kicker">
+    <span class="rel">新闻稿 · 即刻发布</span><span class="dot"></span>
+    <span>FOR IMMEDIATE RELEASE</span><span class="dot"></span>
+    <span>2026 年 10 月 27 日</span>
+  </div>
+
+  <h1>MergeWise 上线：AI Code Review 这件事，先做到"不吵"，再谈"聪明"</h1>
+  <p class="sub">面向 2–50 人工程团队的 GitHub AI 审查员今日开放开通。<b>每个 PR 最多 2 条评论、置信度不够不开口、误报一键永不再犯</b>——团队前 20 个仓库可免费试用 30 天。</p>
+
+  <div class="dateline">
+    <span>产品：MergeWise（GitHub App）</span>
+    <span>适用：GitHub · TypeScript / Python / Go</span>
+    <span>开通：mergewise.ai<span style="opacity:.6">（占位域名）</span></span>
+  </div>
+
+  <p class="lead">过去两年，AI 代码审查工具并不缺能力——缺的是分寸。开发者社区对这类工具最常见的评价不是"它找不到 bug"，而是<b>"它太吵了"</b>：一个中等规模的 PR 动辄收到七八条评论，其中近一半是命名和格式意见。MergeWise 今天给出的回答是一个反直觉的产品原则：<b>一个 AI 审查员的价值，不取决于它说了多少，而取决于开发者敢不敢让它一直开着。</b></p>
+
+  <h2>需求不是猜的：有人公开说愿意为它付费</h2>
+  <p>上周，一位开发者在 X（原 Twitter）上一条获得数千回复的帖子下，被问到愿意为 AI 产品付哪部分的钱，他的回答很直接：</p>
+  <blockquote>
+    "GitHub 的 pull requests，是我愿意付费的部分。"
+    <span class="en">"the github pull requests are the part i would pay for."</span>
+    <span class="src">— X 公开讨论帖，主帖 1.7K 回复 / 612 赞</span>
+  </blockquote>
+  <p>愿意付费与不敢常开之间的落差，正是 MergeWise 切入的位置。团队调研了主流工具（CodeRabbit、Copilot Code Review 等）在真实仓库里的表现后确认：<b>开发者感知到的"误报率"，本质是"每个 PR 被打扰的次数"。</b>所以 MergeWise 把产品的第一性指标定为——每 PR 评论数 ≤ 2。</p>
+
+  <h2>三道闸门，把噪音挡在 PR 之外</h2>
+  <div class="gates">
+    <div class="gate">
+      <div class="gn">GATE 01</div>
+      <h4>置信度门槛</h4>
+      <p>每条发现都带校准过的置信度分数。低于 0.80 的不进 PR，只进后台"待观察池"，用于下一轮校准——开发者永远看不到没把握的意见。</p>
+    </div>
+    <div class="gate">
+      <div class="gn">GATE 02</div>
+      <h4>聚合评论</h4>
+      <p>阻断级问题贴在代码行上，其余问题合并进唯一一条总结评论。命名、风格、格式类意见默认不做——那是 ESLint 和 Prettier 的工作。</p>
+    </div>
+    <div class="gate">
+      <div class="gn">GATE 03</div>
+      <h4>误报闭环</h4>
+      <p>点一次 👎（reaction）或回复 <code>@mergewise mute this</code>，即刻生成该仓库的抑制规则，同类代码永不再触发。误报率随使用持续下降，且在看板里完全透明。</p>
+    </div>
+  </div>
+  <p style="margin-top:14px">对仍不放心的团队，MergeWise 默认以 <b>shadow 模式</b>接入：前两周只在后台运行、记录、不发表任何评论，用团队自己的代码校准阈值；管理者审阅误报率报告后，再决定是否开启评论。</p>
+
+  <h2>内测团队怎么说</h2>
+  <div class="stats">
+    <div class="stat"><div class="v">1.4</div><div class="k">每 PR 平均评论数<br>（同类工具 6–9 条）</div></div>
+    <div class="stat"><div class="v">3.2%</div><div class="k">误报率<br>（接入首周为 11.8%）</div></div>
+    <div class="stat"><div class="v">68%</div><div class="k">建议采纳率<br>（Apply 或标记有效）</div></div>
+    <div class="stat"><div class="v">41s</div><div class="k">首条结论耗时<br>（p95 为 1m12s）</div></div>
+  </div>
+  <p class="stat-note">数据来自 3 个内测仓库、近 30 天 500+ PR 的 shadow 与评论模式运行记录。</p>
+
+  <div class="quote">
+    <p>"我们之前上过两款 AI 审查工具，都在两周内被团队投票静音了。MergeWise 是第一个我没听到抱怨的——不是因为找不到问题，而是因为它只在有把握的时候开口，还直接给了能一键应用的修复。"</p>
+    <p class="who"><b>某支付系统团队 Tech Lead</b>（内测用户，12 人工程团队）</p>
+  </div>
+  <div class="quote">
+    <p>"别人把'发现得多'当卖点，我们把'少打扰'当卖点。开发者不需要一个更聒噪的审查员，需要一个敢托付初筛的同事。"</p>
+    <p class="who"><b>MergeWise 创始人</b></p>
+  </div>
+
+  <h2>定价与开通</h2>
+  <p>MergeWise 以 GitHub App 形式接入，安装后选定仓库即完成部署，无需改一行代码。定价按仓库计算，不走人头采购：</p>
+  <p style="padding-left:4px">
+    · <b>开源 / 个人</b>：公开仓库永久免费；<br>
+    · <b>Team</b>：<b>¥199 / 仓库 / 月</b>（约 $29），含私有仓库、置信度门槛、抑制规则、误报率看板与 shadow 模式；<br>
+    · <b>Enterprise</b>：支持私有化部署，代码不出网，模型可替换。
+  </p>
+  <p><b>即日起至 11 月 30 日，前 20 个申请的仓库免费试用 Team 版 30 天</b>——包含完整的 shadow 校准期与一份误报率报告，试用结束无需绑卡。</p>
+
+  <h2>你可能想问的三个问题</h2>
+  <div class="faq">
+    <details open>
+      <summary>误报率要低到多少，才敢让它常驻团队仓库？</summary>
+      <p>我们的答案是不承诺绝对值，承诺两件事：一是"每 PR ≤ 2 条评论"的打扰上限；二是误报可收敛——每一次"👎"或 <code>@mergewise mute this</code> 都变成仓库级抑制规则，内测仓库的误报率在 30 天内从 11.8% 降到 3.2%，曲线在看板里对客户完全公开。</p>
+    </details>
+    <details>
+      <summary>我们的代码会被上传或用于训练吗？</summary>
+      <p>Team 版仅在审查瞬间处理 diff 片段，不落库、不用于任何模型训练；Enterprise 版支持完全私有化部署（VPC / 内网），模型可切换为自建端点。</p>
+    </details>
+    <details>
+      <summary>和 GitHub Copilot / CodeRabbit 的区别是什么？</summary>
+      <p>它们优化"看得多"，我们优化"说得准"。具体差异：默认不做风格类意见、置信度不足不开口、每 PR 评论聚合、误报一键静音、新仓库先 shadow 两周。可以拿同一个 PR 并排跑一遍，评论数差距一目了然。</p>
+    </details>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta" id="consult">
+    <h2>让 MergeWise 先安静地看两周你的仓库</h2>
+    <p>预约 15 分钟演示，或直接申请 shadow 试用：我们用<b>你们自己的仓库</b>跑出第一份误报率报告，你再决定要不要开评论。<b>前 20 个仓库免费 30 天，无需绑卡。</b></p>
+    <div class="cta-row">
+      <a class="btn pri" href="#" onclick="ctaToast('占位链接：接入你的预约表单（如 Calendly / 金数据 / Typeform）');return false;">▶ 预约 15 分钟演示</a>
+      <a class="btn sec" href="#" onclick="ctaToast('占位链接：接入试用申请表单或 GitHub App 安装页');return false;">申请 shadow 试用</a>
+      <div class="cta-side">
+        <div class="qr">咨询群<br>二维码<br>占位</div>
+      </div>
+    </div>
+    <div class="cta-note">商务咨询：sales@mergewise.ai（占位） · 媒体：press@mergewise.ai（占位） · 演示环境可现场打开真实 GitHub PR</div>
+  </div>
+
+  <div class="about">
+    <h3>关于 MergeWise</h3>
+    <p>MergeWise 是面向小型工程团队的 AI 代码审查服务，专注 GitHub Pull Request 场景下的 Bug、安全风险与测试覆盖检查。产品以"噪音预算"为核心设计原则：置信度门槛、聚合评论、误报抑制闭环与 shadow 接入模式，让 AI 审查第一次做到"敢一直开着"。</p>
+    <div class="contact">
+      <span><b>官网</b> <code>mergewise.ai（占位）</code></span>
+      <span><b>商务</b> <code>sales@mergewise.ai（占位）</code></span>
+      <span><b>媒体联系</b> <code>press@mergewise.ai（占位）</code></span>
+    </div>
+  </div>
+
+  <div class="end">— 完 —</div>
+
+</div></div>
+
+<!-- 粘底 CTA -->
+<div class="bar"><div class="bar-in">
+  <span class="t"><b>MergeWise</b><span class="hidemobile"> · 每 PR ≤ 2 条评论的 AI 审查员 · </span>前 20 仓库免费试用 30 天</span>
+  <a href="#consult" onclick="ctaToast('占位：接入演示预约表单');return false;">立即咨询</a>
+  <a class="ghostlink" href="#consult">查看试用规则 →</a>
+</div></div>
+
+<div id="toast"></div>
+
+<!--
+════════════════════════════════════════════
+发布前替换清单（发布时删除本注释）：
+1. 域名与邮箱：mergewise.ai / sales@ / press@ → 替换为真实域名邮箱
+2. 三个 CTA 占位链接：预约演示、shadow 试用、粘底"立即咨询"
+   → 接入预约表单（Calendly/金数据/Typeform）或 GitHub App 安装页
+3. 咨询群二维码占位框 → 替换为真实二维码图片
+4. 内测数据（1.4 条/PR、3.2%、68%、41s、11.8%→3.2%）→ 用真实内测
+   数据核实或删改；内测引语（Tech Lead）需取得本人授权或改写
+5. 限时政策：前 20 仓库 / 11月30日截止 → 确认后保留或调整
+6. X 帖引语翻译保留原文，链接可在公众号版本中放入"阅读原文"
+════════════════════════════════════════════
+-->
+
+<script>
+function ctaToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(window.__tt);
+  window.__tt = setTimeout(function(){ t.classList.remove('on'); }, 2600);
+}
+</script>
+</body>
+</html>

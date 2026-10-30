@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MergeWise 用户手册 · 5 分钟上手</title>
+<style>
+:root{
+  --bg:#ffffff; --page:#f6f8fa; --side:#f6f8fa;
+  --border:#d8dee4; --border-soft:#e9edf1;
+  --text:#1b1f24; --text2:#424a53; --muted:#6b7280; --faint:#8b949e;
+  --brand:#6e40c9; --brand-deep:#54309e; --brand-bg:#f3effc; --brand-line:#a371f7;
+  --green:#1a7f37; --green-bg:#dafbe1;
+  --amber:#9a6700; --amber-bg:#fff8c5;
+  --blue:#0969da; --blue-bg:#ddf4ff;
+  --red:#cf222e; --red-bg:#ffebe9;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--page);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.75;-webkit-font-smoothing:antialiased}
+
+/* ── 顶栏 ── */
+.top{background:#0d1117;color:#e6edf3;position:sticky;top:0;z-index:50;border-bottom:1px solid #21262d}
+.top-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 20px}
+.mk{width:26px;height:26px;border-radius:7px;background:linear-gradient(145deg,#6e40c9,#a371f7);display:grid;place-items:center;flex:0 0 auto}
+.mk svg{width:14px;height:14px}
+.bname{font-weight:700;font-size:14.5px}
+.bname span{color:#7d8590;font-weight:400}
+.top-meta{margin-left:auto;font-size:12px;color:#8b949e;font-family:var(--mono)}
+.top-meta b{color:#e6edf3}
+
+/* ── 布局 ── */
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:0}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.side{display:none}}
+
+/* 侧栏 */
+.side{padding:26px 0 60px}
+.toc{position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;padding:0 18px 0 22px;font-size:13px}
+.toc .tg{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin:18px 0 6px}
+.toc .tg:first-child{margin-top:0}
+.toc a{display:block;color:var(--text2);text-decoration:none;padding:4px 10px;border-radius:6px;border-left:2px solid transparent;line-height:1.5;transition:.12s}
+.toc a:hover{background:#eef1f4;color:var(--text)}
+.toc a.on{background:var(--brand-bg);color:var(--brand-deep);border-left-color:var(--brand-line);font-weight:600}
+.toc a.sub{padding-left:22px;font-size:12.5px;color:var(--muted)}
+
+/* 正文 */
+.main{background:var(--bg);border-left:1px solid var(--border);padding:34px 48px 90px;min-width:0}
+@media(max-width:680px){.main{padding:26px 20px 70px}}
+
+.hero{margin-bottom:30px}
+.hero .kick{font-family:var(--mono);font-size:11px;letter-spacing:.8px;color:var(--brand);font-weight:700;text-transform:uppercase}
+.hero h1{font-size:30px;font-weight:750;letter-spacing:-.6px;margin:6px 0 8px}
+.hero p{color:var(--text2);font-size:15px;max-width:640px}
+.hero p b{color:var(--text)}
+
+/* 路径图 */
+.path{display:flex;align-items:stretch;gap:8px;margin:22px 0 8px;flex-wrap:wrap}
+.pstep{flex:1;min-width:130px;border:1px solid var(--border-soft);border-radius:10px;padding:11px 13px;background:linear-gradient(180deg,#fbfcfe,#fff);position:relative}
+.pstep .pn{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--brand)}
+.pstep .pt{font-size:12.5px;font-weight:650;margin-top:2px}
+.pstep .pm{font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:3px}
+.pstep .arr{position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:#c4ccd4;font-size:12px;z-index:1}
+.path-note{font-size:12px;color:var(--muted);margin-bottom:6px}
+.path-note b{color:var(--text2)}
+
+/* 章节 */
+section{margin-top:46px;scroll-margin-top:70px}
+h2{font-size:22px;font-weight:750;letter-spacing:-.4px;padding-bottom:10px;border-bottom:1px solid var(--border-soft);margin-bottom:6px;display:flex;align-items:baseline;gap:10px}
+h2 .time{font-size:11.5px;font-weight:600;color:var(--brand);background:var(--brand-bg);border:1px solid var(--brand-line);border-radius:2em;padding:2px 10px;font-family:var(--mono);letter-spacing:0}
+h3{font-size:16.5px;font-weight:700;margin:26px 0 10px;scroll-margin-top:70px}
+h4{font-size:14px;font-weight:650;margin:18px 0 8px}
+p{color:var(--text2);margin-bottom:14px}
+p b,li b{color:var(--text)}
+ul,ol{margin:0 0 16px 22px;color:var(--text2)}
+li{margin-bottom:7px}
+li::marker{color:var(--brand)}
+
+/* 步骤块 */
+.step{display:flex;gap:16px;margin:24px 0}
+.sn{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:var(--brand-bg);border:1.5px solid var(--brand-line);color:var(--brand-deep);font-weight:750;font-size:14px;display:grid;place-items:center;margin-top:2px}
+.sc{flex:1;min-width:0}
+.sc h3{margin:2px 0 8px}
+.sc .st{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+
+/* 提示框 */
+.tip,.warn,.info{border-radius:10px;padding:13px 16px;margin:16px 0;font-size:13.5px;line-height:1.7}
+.tip{background:var(--green-bg);border:1px solid #b4e0bf}
+.tip::before{content:"💡 提示 · ";font-weight:700;color:var(--green)}
+.warn{background:var(--amber-bg);border:1px solid #e8d48a}
+.warn::before{content:"⚠️ 注意 · ";font-weight:700;color:var(--amber)}
+.info{background:var(--blue-bg);border:1px solid #a5d8f3}
+.info::before{content:"ℹ️ 说明 · ";font-weight:700;color:var(--blue)}
+
+/* UI 模拟 */
+.ui{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:14px 0;font-size:13px;background:#fff}
+.ui-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--page);border-bottom:1px solid var(--border-soft);color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+.ui-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border-soft)}
+.ui-row:last-child{border-bottom:none}
+.ui-row .rb{margin-left:auto;display:flex;gap:8px}
+.chipbtn{font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:6px;border:1px solid var(--border);color:var(--text2)}
+.chipbtn.sel{background:var(--brand);border-color:var(--brand);color:#fff}
+.ui-row .rn{font-weight:650;font-size:13px}
+.ui-row .rd{font-size:11.5px;color:var(--muted)}
+
+/* 代码块 */
+.codeblk{position:relative;border:1px solid var(--border);border-radius:9px;overflow:hidden;margin:14px 0;background:#0d1117}
+.code-h{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #21262d;color:#8b949e;font-family:var(--mono);font-size:11px}
+.copy{margin-left:auto;font-size:10.5px;padding:2px 9px;border-radius:5px;border:1px solid #30363d;color:#c9d1d9;background:none;font-weight:600;cursor:pointer}
+.copy:hover{border-color:var(--brand-line);color:var(--brand-line)}
+.codeblk pre{padding:13px 15px;font-family:var(--mono);font-size:12px;line-height:1.8;color:#c9d1d0;overflow-x:auto}
+.c-c{color:#6e7681}.c-k{color:#7ee787}.c-s{color:#a5d6ff}.c-v{color:#ffa657}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;background:var(--page);border:1px solid var(--border-soft)}
+td{padding:9px 10px;border:1px solid var(--border-soft);color:var(--text2);vertical-align:top}
+td b{color:var(--text)}
+.ok{color:var(--green);font-weight:650}
+.mid{color:var(--amber);font-weight:650}
+.bad{color:var(--red);font-weight:650}
+code{font-family:var(--mono);font-size:12px;background:var(--page);border:1px solid var(--border-soft);border-radius:4px;padding:0 5px;color:var(--text)}
+
+/* FAQ */
+details{border:1px solid var(--border-soft);border-radius:9px;padding:12px 16px;margin-bottom:9px;background:#fbfcfe}
+summary{font-weight:650;font-size:14px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+summary::before{content:"Q";font-family:var(--mono);font-size:11px;color:var(--brand);font-weight:700;border:1px solid var(--brand-line);border-radius:4px;padding:1px 6px}
+details[open] summary{margin-bottom:8px}
+details p{font-size:13.5px;margin:0}
+
+/* 结尾帮助块 */
+.help{margin-top:50px;border-radius:12px;padding:24px 26px;background:linear-gradient(130deg,#241442,#3a1d78 60%,#0d1117);color:#fff}
+.help h3{color:#fff;margin:0 0 8px}
+.help p{color:#c9b8ec;font-size:13.5px;margin-bottom:14px}
+.help code{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#e6e1f5}
+.help .links{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px}
+.help .links span{color:#8d7bb8}
+.help .links b{color:#fff}
+
+.foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--border-soft);font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.foot .r{margin-left:auto;font-family:var(--mono)}
+
+@media print{
+  .top,.side,.copy{display:none}
+  body{background:#fff}
+  .wrap{display:block}
+  .main{border:none;padding:0}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="top-in">
+  <div class="mk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+  <div class="bname">MergeWise <span>· 用户手册</span></div>
+  <div class="top-meta">v1.0 · <b>2026-10-27</b> · 阅读约 8 分钟</div>
+</div></div>
+
+<div class="wrap">
+
+<!-- ══════════ 侧栏目录 ══════════ -->
+<aside class="side"><nav class="toc" id="toc">
+  <div class="tg">快速开始</div>
+  <a href="#path5" class="on">上手总览 · 5 分钟</a>
+  <a href="#install" class="sub">1. 安装 GitHub App</a>
+  <a href="#select" class="sub">2. 选仓库与严格度</a>
+  <a href="#shadow" class="sub">3. Shadow 模式跑两周</a>
+  <a href="#report" class="sub">4. 读误报率报告</a>
+  <a href="#enable" class="sub">5. 开启评论</a>
+  <div class="tg">日常使用</div>
+  <a href="#daily-review">看懂 PR 里的评论</a>
+  <a href="#apply">应用修复建议</a>
+  <a href="#falsepositive">处理误报（最重要）</a>
+  <a href="#dashboard">看板指标解读</a>
+  <div class="tg">配置调优</div>
+  <a href="#tuning">置信度门槛</a>
+  <a href="#strategy">评论策略与范围</a>
+  <a href="#rules">抑制规则管理</a>
+  <div class="tg">安全与更多</div>
+  <a href="#security">权限与数据处理</a>
+  <a href="#faq">常见问题</a>
+  <a href="#support">获取帮助</a>
+</nav></aside>
+
+<!-- ══════════ 正文 ══════════ -->
+<main class="main">
+
+<div class="hero">
+  <div class="kick">User Guide · Quick Start</div>
+  <h1>5 分钟让 MergeWise 开始工作</h1>
+  <p>MergeWise 是装在 GitHub 上的 AI 审查员：读 diff、标 <b>Bug / 安全风险 / 缺测试</b>，每个 PR 最多 2 条评论。它的默认工作方式是<b>先安静观察、再开口说话</b>——这份手册的前 5 步就是这条路径。</p>
+</div>
+
+<div class="path" id="path5">
+  <div class="pstep"><div class="pn">STEP 1</div><div class="pt">安装 App</div><div class="pm">~2 min</div><span class="arr">→</span></div>
+  <div class="pstep"><div class="pn">STEP 2</div><div class="pt">选仓库 + 严格度</div><div class="pm">~1 min</div><span class="arr">→</span></div>
+  <div class="pstep"><div class="pn">STEP 3</div><div class="pt">Shadow 跑 2 周</div><div class="pm">自动</div><span class="arr">→</span></div>
+  <div class="pstep"><div class="pn">STEP 4</div><div class="pt">读误报率报告</div><div class="pm">~5 min</div><span class="arr">→</span></div>
+  <div class="pstep"><div class="pn">STEP 5</div><div class="pt">开启评论</div><div class="pm">1 click</div></div>
+</div>
+<p class="path-note">全程不需要改一行代码、不需要绑卡；第 3 步期间团队<b>不会收到任何评论</b>。</p>
+
+<!-- ═══════ STEP 1 ═══════ -->
+<section id="install">
+  <h2>第 1 步 · 安装 GitHub App</h2>
+  <div class="step">
+    <div class="sn">1</div>
+    <div class="sc">
+      <h3>安装并授权</h3>
+      <p>打开 <code>github.com/apps/mergewise</code>（占位链接）→ 点击 <b>Install</b> → 选择授权范围：</p>
+      <ul>
+        <li><b>All repositories</b>：省事，但建议先不用——按仓库渐进接入更稳</li>
+        <li><b>Only select repositories</b>：<span class="ok">推荐</span> 先挑 1–2 个活跃仓库试跑</li>
+      </ul>
+      <div class="tip">MergeWise 申请的权限是 <code>Pull requests（读写）</code>、<code>Contents（读 diff）</code> 和 <code>Issues（读，用于接收评论里的 mute 命令）</code>。写权限仅用于发布评论，不修改你的代码——修复建议通过 GitHub 官方的 suggestion 机制提交，由你决定采不采纳。安装 GitHub App 需要<b>仓库管理员</b>权限。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ STEP 2 ═══════ -->
+<section id="select">
+  <h2>第 2 步 · 选仓库与严格度</h2>
+  <div class="step">
+    <div class="sn">2</div>
+    <div class="sc">
+      <h3>第一次安装会问你"要多严格"</h3>
+      <p>严格度决定了置信度门槛（多少分以上的发现才会发评论）的初始值：</p>
+      <div class="ui">
+        <div class="ui-bar">mergewise.ai/settings/acme-payments · 初始严格度</div>
+        <div class="ui-row"><div><div class="rn">保守</div><div class="rd">只有高置信问题才说 · 阈值 0.90 · 最安静</div></div><div class="rb"><span class="chipbtn">选择</span></div></div>
+        <div class="ui-row"><div><div class="rn">标准</div><div class="rd">均衡默认值 · 阈值 0.80 · 内测团队最常用</div></div><div class="rb"><span class="chipbtn sel">✓ 已选</span></div></div>
+        <div class="ui-row"><div><div class="rn">探索</div><div class="rd">看得更多也说得更勤 · 阈值 0.65 · 适合影子期观察用</div></div><div class="rb"><span class="chipbtn">选择</span></div></div>
+      </div>
+      <p>拿不准就选 <b>标准</b>。这个值之后随时能在设置里改，而且 shadow 期结束后我们会根据你仓库的实际数据给一条建议值。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ STEP 3 ═══════ -->
+<section id="shadow">
+  <h2>第 3 步 · Shadow 模式跑两周</h2>
+  <div class="step">
+    <div class="sn">3</div>
+    <div class="sc">
+      <h3>"只看不说"的观察期</h3>
+      <p>新仓库默认进入 <b>shadow 模式</b>：MergeWise 会分析每一个新 PR，但<b>不发表任何评论</b>，只在后台记录"如果开了评论，我会说什么"。</p>
+      <h4>为什么需要这两周</h4>
+      <ul>
+        <li>用<b>你们自己的代码</b>校准置信度门槛——不同代码库的"正常"长得不一样</li>
+        <li>积累足够的样本（建议 ≥ 30 个 PR）让误报率报告有统计意义</li>
+        <li>团队零打扰：没有人会被机器人的评论打断</li>
+      </ul>
+      <h4>什么时候可以提前结束</h4>
+      <p>满足 <b>30 个 PR</b> 且 <b>误报率报告连续 3 天 &lt; 8%</b> 时，设置页会出现"建议开启评论"的绿字提示。急着上线也可以直接手动开，但不推荐。</p>
+      <div class="info">Shadow 期间可以在 <code>Insights → 待观察池</code> 看到所有"被拦下的发现"，提前了解它的口味对不对。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ STEP 4 ═══════ -->
+<section id="report">
+  <h2>第 4 步 · 读误报率报告</h2>
+  <div class="step">
+    <div class="sn">4</div>
+    <div class="sc">
+      <h3>开启评论前唯一要做的事</h3>
+      <p>Shadow 满 14 天后，设置页会生成一份一页纸报告。只需要看三个数：</p>
+      <table>
+        <tr><th style="width:130px">看什么</th><th>健康值</th><th>不健康时怎么办</th></tr>
+        <tr><td><b>误报率</b></td><td class="ok">&lt; 8%（可开启）</td><td>报告会列出误报最多的 3 条规则——直接在报告里点"静音"再开启评论</td></tr>
+        <tr><td><b>预估每 PR 评论数</b></td><td class="ok">≤ 2 条</td><td>调高阈值（每 +0.05 约减 15% 评论），或把 P2 类并入汇总</td></tr>
+        <tr><td><b>P0 检出数</b></td><td>≥ 1（说明它真在干活）</td><td>为 0 属正常（不是每个 PR 都有高危），但连续为 0 建议先联系我们看看</td></tr>
+      </table>
+      <div class="tip">这份报告也是给管理者的"可汇报证据"——截图放进周报，比任何宣传页都有说服力。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ STEP 5 ═══════ -->
+<section id="enable">
+  <h2>第 5 步 · 开启评论</h2>
+  <div class="step">
+    <div class="sn">5</div>
+    <div class="sc">
+      <h3>一个开关，随时可退</h3>
+      <p>设置页 → <code>评论模式</code> → 切到 <b>Commenting</b>。从下一个新 PR 起，团队就会看到 MergeWise 的第一条评论。</p>
+      <div class="warn">开启只影响<b>之后的 PR</b>，不会回头评论历史 PR；随时可以切回 shadow，已发的评论不受影响。任何团队成员都可以在 PR 里回复 <code>@mergewise mute this</code> 临时静音单个 PR。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 日常使用 ══════════ -->
+<section id="daily-review">
+  <h2>日常 · 看懂 PR 里的评论</h2>
+  <p>开启评论后，每个 PR 最多出现两种评论形态：</p>
+  <table>
+    <tr><th style="width:150px">形态</th><th>什么时候出现</th><th>长什么样</th></tr>
+    <tr>
+      <td><b>行内评论</b></td>
+      <td>仅 <code>P0（阻断级）</code> 问题——安全漏洞、必然运行的 Bug</td>
+      <td>贴在出问题的那一行，附"建议修复"代码块，红色 <b>P0</b> 标记 + 置信度分数</td>
+    </tr>
+    <tr>
+      <td><b>汇总评论</b></td>
+      <td>其余所有达到阈值的问题（P1/P2）</td>
+      <td>每个 PR 固定只有一条，表格列出位置、级别、置信度</td>
+    </tr>
+  </table>
+  <p>低于置信度门槛的发现<b>不会出现</b>——它们进的是后台的"待观察池"，永远不直接打扰你。命名、风格、格式类意见默认完全不做（那是 ESLint / Prettier 的职责）。</p>
+</section>
+
+<section id="apply">
+  <h2>日常 · 应用修复建议</h2>
+  <p>P0 行内评论和汇总里的 P1 条目都带 <b>建议修复</b>。两种用法：</p>
+  <ol>
+    <li><b>单个应用</b>：点评论里的 <code>Apply suggestion</code>——修复会作为 commit 直接进你的分支，提交人是你的名字，可 revert</li>
+    <li><b>批量应用</b>：汇总评论底部 <code>Apply all</code> 一次采纳全部建议（逐条生成 commit，方便单独回滚）</li>
+  </ol>
+  <div class="tip">每次 Apply 会回流为正样本——同规则在你仓库里的置信度会随之微升。也就是说，你采纳得越多，它在你仓库里说得越准。</div>
+</section>
+
+<section id="falsepositive">
+  <h2>日常 · 处理误报（最重要的一节）</h2>
+  <p>误报一定会发生。MergeWise 的设计目标是让它<b>只发生一次</b>：</p>
+  <div class="step">
+    <div class="sn">→</div>
+    <div class="sc">
+      <p><b>当一条评论是误报：</b>点评论右下角的 <code>👎</code>（GitHub reaction），或在评论里回复 <code>@mergewise mute this</code>。<br>
+      立刻发生三件事：这条评论被标记；生成一条<b>仓库级抑制规则</b>（同类代码不再触发同一规则）；误报率看板更新。</p>
+      <p><b>当一类问题你都不关心：</b>在评论上回复 <code>@mergewise mute rule missing-test</code>，整条规则在本仓库静音——比如某些仓库确实不写测试，直接关掉这类提醒。</p>
+      <p><b>改主意了：</b>设置 → 抑制规则，可以逐条撤销，撤销后立即恢复生效。</p>
+    </div>
+  </div>
+  <div class="info">误报率 &gt; 15% 的规则会自动降权（更难达到阈值），&gt; 30% 自动静音并通知管理者。你不需要盯梢，机制会自己收敛。</div>
+</section>
+
+<section id="dashboard">
+  <h2>日常 · 看板指标解读</h2>
+  <p><code>Insights</code> 页四个核心指标，以及"多少算健康"：</p>
+  <table>
+    <tr><th>指标</th><th>含义</th><th style="width:220px">健康区间</th></tr>
+    <tr><td><b>每 PR 评论数</b></td><td>开发者实际感知的打扰频率——我们的一等指标</td><td class="ok">≤ 2 条 · <span class="mid">2–4 需调优</span> · <span class="bad">&gt; 4 立刻升阈值</span></td></tr>
+    <tr><td><b>误报率</b></td><td>被标 👎（误报）的评论占比</td><td class="ok">&lt; 5% · <span class="mid">5–10%</span> · <span class="bad">&gt; 10% 检查静音建议</span></td></tr>
+    <tr><td><b>建议采纳率</b></td><td>被 Apply 或标记有效的比例（健康的反向信号）</td><td class="ok">≥ 60% · <span class="mid">40–60%</span> · <span class="bad">&lt; 40% 说明阈值太低</span></td></tr>
+    <tr><td><b>首条结论耗时</b></td><td>从开 PR 到第一条评论出现的耗时</td><td class="ok">p95 &lt; 90s 即正常</td></tr>
+  </table>
+  <p>每周一早上会有一封邮件摘要推送给管理者，花 60 秒就能掌握本周质量趋势（Slack / 飞书通道在路线图上）。</p>
+</section>
+
+<!-- ══════════ 配置调优 ══════════ -->
+<section id="tuning">
+  <h2>调优 · 置信度门槛</h2>
+  <p>设置 → <code>置信度门槛</code>。拖动滑块时右侧会实时显示影响：<b>"过去 30 天会发出多少条评论、平均每 PR 几条"</b>。</p>
+  <table>
+    <tr><th>你的情况</th><th>建议动作</th></tr>
+    <tr><td>团队开始抱怨"说太多"</td><td>阈值 <code>+0.05</code>（约减 15% 评论），观察一周</td></tr>
+    <tr><td>误报率抬头（&gt; 8%）</td><td>先看 Insights 静音建议，通常 1–2 条规则就能压下来，<b>不必动阈值</b></td></tr>
+    <tr><td>感觉漏报多、想看得更全</td><td>阈值 <code>−0.05</code>，同时确认评论策略仍是"聚合"，评论数不会失控</td></tr>
+    <tr><td>新仓库不知道从哪开始</td><td>保持默认 0.80，跑完 shadow 期采纳报告建议值</td></tr>
+  </table>
+</section>
+
+<section id="strategy">
+  <h2>调优 · 评论策略与范围</h2>
+  <h3>评论策略（三选一）</h3>
+  <ul>
+    <li><b>P0 行内 + 其余汇总</b>（默认，推荐）：打断最少、高危最醒目</li>
+    <li><b>全部行内</b>：适合 &lt; 5 文件的小 PR 团队，信息最全但评论多</li>
+    <li><b>只发汇总一条</b>：极度怕打扰的团队；P0 也会进汇总（不建议）</li>
+  </ul>
+  <h3>审查范围</h3>
+  <p>默认开启三类：<b>Bug / 安全风险 / 缺测试</b>。可按仓库增删。风格、命名、格式、性能类永远不在范围内。</p>
+  <h3>跳过路径</h3>
+  <p>生成代码、迁移脚本、快照文件建议直接跳过，省额度也省噪音。设置里默认已带：</p>
+  <div class="codeblk">
+    <div class="code-h">默认 skip 列表（可追加）<button class="copy" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="c-c">migrations/**   **/*.generated.ts   dist/**   **/*.snap   vendor/**</span></pre>
+  </div>
+</section>
+
+<section id="rules">
+  <h2>调优 · 抑制规则管理</h2>
+  <p>每次点 <code>👎</code> 和 <code>@mergewise mute rule</code> 都沉淀在这里。设置 → 抑制规则：</p>
+  <ul>
+    <li>每条规则显示：<b>来源规则 / 触发原因 / 创建人 / 创建时间 / 已避免的评论数</b></li>
+    <li>"已避免的评论数"很有意思——它是这个产品在你仓库里"学会安静"的直接证据</li>
+    <li>团队复盘时建议过一遍：被静音的规则里有没有误杀？逐条 <code>恢复</code> 即可，立即生效</li>
+  </ul>
+</section>
+
+<!-- ══════════ 安全 ══════════ -->
+<section id="security">
+  <h2>安全 · 权限与数据处理</h2>
+  <table>
+    <tr><th style="width:180px">问题</th><th>答案</th></tr>
+    <tr><td><b>能读到什么</b></td><td>仅你授权仓库的 PR diff 与必要上下文文件。不克隆整仓、不读 issue、不读用户数据</td></tr>
+    <tr><td><b>代码会存下来吗</b></td><td>Team 版：审查瞬间处理，<b>diff 不落库</b>；只保留评论元数据（文件名、行号、规则、置信度）用于看板</td></tr>
+    <tr><td><b>用于训练吗</b></td><td><b>绝不。</b>任何版本、任何套餐都不使用客户代码训练模型</td></tr>
+    <tr><td><b>代码不能出网</b></td><td>Enterprise 版支持私有化部署（VPC / 内网），模型端点可替换为自建</td></tr>
+    <tr><td><b>怎么卸载</b></td><td>GitHub → Settings → Applications → MergeWise → Uninstall。已发评论保留，后台数据 24h 内删除</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section id="faq">
+  <h2>常见问题</h2>
+  <details open>
+    <summary>支持哪些语言？</summary>
+    <p>当前支持 <b>TypeScript / JavaScript、Python、Go</b>。Java 与 Rust 在路线图上（可在设置里投票加速）。</p>
+  </details>
+  <details>
+    <summary>会拖慢 CI 或阻塞合并吗？</summary>
+    <p>不会。MergeWise 不接入 CI 流水线，也不设必需的 status check。它只是"多看一眼的同事"，永远不挡路。</p>
+  </details>
+  <details>
+    <summary>免费额度怎么算？</summary>
+    <p>公开仓库永久免费；私有仓库按 <code>¥199 / 仓库 / 月</code>（Team 版），含 14 天 shadow + 无限评论。前 20 个申请的仓库免费试用 30 天。</p>
+  </details>
+  <details>
+    <summary>支持 GitLab / Bitbucket 吗？</summary>
+    <p>暂不支持，当前专注 GitHub。GitLab 在评估中——可以在设置页留下你的邮箱，支持时第一时间通知你。</p>
+  </details>
+  <details>
+    <summary>大 PR（100+ 文件）怎么办？</summary>
+    <p>自动切换为分批审查：优先扫描风险高的文件类型（入口、鉴权、SQL、依赖变更），其余进汇总。增量 push 只审查新增 commit，不重复报旧问题。</p>
+  </details>
+  <details>
+    <summary>机器人身份发的评论，reviewer 需要approve吗？</summary>
+    <p>MergeWise 的评论不会阻塞合并，也不会计为 approve/request changes，不影响分支保护规则——但会在 PR 的 review 时间线里留下一条 MergeWise 的记录。</p>
+  </details>
+</section>
+
+<!-- ══════════ 帮助 ══════════ -->
+<section id="support">
+  <h2>获取帮助</h2>
+  <div class="help">
+    <h3>三条路，按急缓选</h3>
+    <p>安装或配置卡住了？误报想找人讨论？想看某个功能的演示？</p>
+    <div class="links">
+      <span>📧 <b>support@mergewise.ai</b>（占位）· 工作日 2h 内回复</span>
+      <span>💬 <b>用户群</b>（设置页右下角扫码进群）</span>
+      <span>🗓 <b>预约 15 分钟演示</b>（官网首页）</span>
+    </div>
+  </div>
+  <div class="foot">
+    <span>MergeWise 用户手册 v1.0</span>
+    <span>适用版本 v0.3+</span>
+    <span class="r">2026-10-27</span>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* scrollspy */
+var links = [].slice.call(document.querySelectorAll('#toc a'));
+var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+function spy(){
+  var y = window.scrollY + 90, idx = 0;
+  secs.forEach(function(s,i){ if(s && s.offsetTop <= y) idx = i; });
+  links.forEach(function(a,i){ a.classList.toggle('on', i === idx); });
+  /* keep active visible in toc */
+  var act = links[idx];
+  if(act){
+    var r = act.getBoundingClientRect(), t = document.getElementById('toc').getBoundingClientRect();
+    if(r.top < t.top + 10 || r.bottom > t.bottom - 10) act.scrollIntoView({block:'nearest'});
+  }
+}
+window.addEventListener('scroll', spy); spy();
+
+function copyCode(btn){
+  var pre = btn.parentNode.nextElementSibling;
+  navigator.clipboard.writeText(pre.innerText).then(function(){
+    btn.textContent = '已复制';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 1500);
+  });
+}
+</script>
+</body>
+</html>

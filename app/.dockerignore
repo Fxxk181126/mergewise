@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+!.env.production.example
+backups
+dist
+node_modules
+*.sql
+!schema.sql

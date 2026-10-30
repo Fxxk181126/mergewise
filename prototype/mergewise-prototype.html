@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MergeWise · GitHub PR AI Review 产品原型</title>
+<style>
+:root{
+  --bg:#010409; --canvas:#0d1117; --surface:#161b22; --surface2:#1c2128;
+  --border:#30363d; --border-soft:#21262d;
+  --text:#e6edf3; --text2:#b1bac4; --muted:#7d8590;
+  --brand:#a371f7; --brand2:#58a6ff;
+  --green:#3fb950; --red:#f85149; --amber:#d29922; --blue:#58a6ff; --purple:#a371f7;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--canvas); color:var(--text); font-family:var(--sans);
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ---------- topbar ---------- */
+.topbar{
+  height:52px; flex:0 0 52px; display:flex; align-items:center; gap:10px;
+  padding:0 16px; background:var(--bg); border-bottom:1px solid var(--border);
+  position:relative; z-index:40;
+}
+.logo{display:flex;align-items:center;gap:8px;padding-right:12px;margin-right:2px}
+.logo-mark{
+  width:26px;height:26px;border-radius:7px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#6e40c9,#a371f7 55%,#58a6ff);
+  box-shadow:0 0 0 1px rgba(163,113,247,.28),0 4px 14px rgba(110,64,201,.35);
+}
+.logo-mark svg{width:15px;height:15px}
+.logo-txt{font-weight:650;font-size:15px;letter-spacing:-.2px}
+.logo-txt span{color:var(--muted);font-weight:400}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.crumb b{color:var(--text2);font-weight:560}
+.crumb .num{color:var(--muted);font-variant-numeric:tabular-nums}
+.tabs{display:flex;align-items:center;gap:2px;margin-left:auto}
+.tab{
+  padding:6px 11px;border-radius:6px;font-size:13px;color:var(--text2);
+  display:flex;align-items:center;gap:6px;transition:.14s;
+}
+.tab:hover{background:var(--surface2);color:var(--text)}
+.tab.on{background:rgba(163,113,247,.14);color:#d2a8ff;box-shadow:inset 0 0 0 1px rgba(163,113,247,.3)}
+.tab .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7}
+.topright{display:flex;align-items:center;gap:10px;padding-left:12px;margin-left:4px;border-left:1px solid var(--border-soft)}
+.avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#1f6feb,#a371f7);display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
+
+/* ---------- views ---------- */
+main{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:none;overflow:hidden}
+.view.on{display:flex}
+
+/* ---------- PR layout ---------- */
+.pr{display:grid;grid-template-columns:236px minmax(0,1fr) 400px;height:100%}
+@media(max-width:1240px){.pr{grid-template-columns:0 minmax(0,1fr) 380px}.files{border:none;overflow:hidden;padding:0}}
+
+/* files sidebar */
+.files{border-right:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;min-width:0}
+.files-head{padding:12px 14px 10px;border-bottom:1px solid var(--border-soft)}
+.files-title{font-size:12px;font-weight:600;color:var(--text2);display:flex;justify-content:space-between;align-items:center}
+.stat-add{color:var(--green);font-size:12px;font-family:var(--mono)}
+.stat-del{color:var(--red);font-size:12px;font-family:var(--mono)}
+.files-body{overflow-y:auto;padding:8px 8px 20px}
+.file{
+  display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:6px;
+  font-size:12px;color:var(--text2);cursor:pointer;transition:.12s;
+}
+.file:hover{background:var(--surface)}
+.file.on{background:var(--surface2);color:var(--text);box-shadow:inset 2px 0 0 var(--brand)}
+.file .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11.5px}
+.file .fd{font-size:10px;color:var(--muted);font-family:var(--mono);display:flex;gap:3px}
+.pip{width:6px;height:6px;border-radius:50%}
+.pip.p0{background:var(--red)} .pip.p1{background:var(--amber)} .pip.p2{background:var(--blue)}
+.count-badge{
+  min-width:16px;height:16px;padding:0 4px;border-radius:8px;font-size:10px;font-weight:700;
+  display:grid;place-items:center;background:rgba(163,113,247,.18);color:#d2a8ff;
+}
+
+/* PR center */
+.center{display:flex;flex-direction:column;min-width:0;background:var(--canvas)}
+.pr-head{padding:14px 20px 0;border-bottom:1px solid var(--border);background:var(--canvas);flex:0 0 auto}
+.pr-title-row{display:flex;gap:10px;align-items:flex-start}
+.pr-title{font-size:19px;font-weight:600;letter-spacing:-.2px;line-height:1.35}
+.pr-title .num{color:var(--muted);font-weight:400}
+.state{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:2em;
+  background:var(--green);color:#03310d;font-size:12px;font-weight:650;flex:0 0 auto;margin-top:2px;
+}
+.pr-sub{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:9px 0 12px;flex-wrap:wrap}
+.br{background:rgba(88,166,255,.13);color:#79c0ff;padding:2px 7px;border-radius:6px;font-family:var(--mono);font-size:11px}
+.pr-tabs{display:flex;gap:4px;font-size:13px}
+.pr-tab{display:flex;align-items:center;gap:6px;padding:8px 10px;color:var(--text2);border-bottom:2px solid transparent;font-size:13px}
+.pr-tab.on{border-bottom-color:#f78166;color:var(--text);font-weight:560}
+.pr-tab .cb{background:var(--surface2);padding:0 6px;border-radius:2em;font-size:11px;font-weight:600}
+
+/* check banner */
+.banner{
+  display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:12.5px;
+  background:rgba(248,81,73,.07);border-bottom:1px solid rgba(248,81,73,.22);flex:0 0 auto;
+}
+.banner.ok{background:rgba(63,185,80,.06);border-bottom-color:rgba(63,185,80,.2)}
+.banner .bico{width:15px;height:15px;flex:0 0 auto}
+.banner b{font-weight:600}
+.banner .bl{color:var(--muted)}
+.banner .ba{margin-left:auto;display:flex;gap:12px}
+
+/* diff */
+.diff-wrap{flex:1;min-height:0;overflow-y:auto;background:var(--canvas)}
+.diff-file{border-bottom:1px solid var(--border-soft)}
+.df-head{
+  position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:9px;
+  padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);
+  font-size:12.5px;font-family:var(--mono);
+}
+.df-head .caret{color:var(--muted);font-size:10px}
+.df-head .dstat{margin-left:auto;display:flex;gap:6px;font-size:11px}
+.hunk{
+  padding:4px 16px;background:rgba(56,139,253,.1);color:#79c0ff;
+  font-family:var(--mono);font-size:11.5px;border-bottom:1px solid var(--border-soft);
+}
+.dl{display:flex;font-family:var(--mono);font-size:12px;line-height:20px;min-height:20px}
+.dl .ln{
+  flex:0 0 42px;text-align:right;padding-right:10px;color:#484f58;
+  user-select:none;font-size:11px;line-height:20px;
+}
+.dl .sn{flex:0 0 14px;text-align:center;color:#484f58;font-size:11px;user-select:none}
+.dl .cd{flex:1;white-space:pre;padding-right:16px;color:var(--text2);overflow-x:auto}
+.dl.add{background:rgba(63,185,80,.09)}
+.dl.add .sn{color:var(--green)}
+.dl.add .cd{color:#c9e9d0}
+.dl.del{background:rgba(248,81,73,.07)}
+.dl.del .sn{color:var(--red)}
+.dl.del .cd{color:#e8b7b4;text-decoration:none;opacity:.85}
+.dl.hl{background:rgba(163,113,247,.13);outline:1px solid rgba(163,113,247,.35);outline-offset:-1px}
+.kw{color:#ff7b72} .str{color:#a5d6ff} .fn2{color:#d2a8ff} .cm{color:#6e7681;font-style:italic} .vr{color:#79c0ff}
+
+/* inline finding card */
+.inline-finding{
+  margin:8px 16px 12px 56px;border:1px solid rgba(163,113,247,.35);border-radius:8px;
+  background:linear-gradient(180deg,rgba(110,64,201,.1),rgba(22,27,34,.9));
+  overflow:hidden;transition:.2s;box-shadow:0 4px 18px rgba(0,0,0,.35);
+}
+.inline-finding.flash{box-shadow:0 0 0 2px rgba(163,113,247,.6),0 6px 24px rgba(110,64,201,.35)}
+.inline-finding.dim{opacity:.42;filter:saturate(.35)}
+.if-head{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border-soft);background:rgba(0,0,0,.2)}
+.sev{
+  font-size:10px;font-weight:750;letter-spacing:.4px;padding:2px 7px;border-radius:4px;
+  text-transform:uppercase;flex:0 0 auto;
+}
+.sev.p0{background:rgba(248,81,73,.16);color:#ff9492;box-shadow:inset 0 0 0 1px rgba(248,81,73,.35)}
+.sev.p1{background:rgba(210,153,34,.15);color:#e3b341;box-shadow:inset 0 0 0 1px rgba(210,153,34,.35)}
+.sev.p2{background:rgba(88,166,255,.13);color:#79c0ff;box-shadow:inset 0 0 0 1px rgba(88,166,255,.3)}
+.if-title{font-size:12.5px;font-weight:590;flex:1;line-height:1.4}
+.conf{font-size:10.5px;color:var(--muted);font-family:var(--mono);flex:0 0 auto}
+.conf b{color:#d2a8ff;font-weight:600}
+.if-body{padding:11px 12px 12px}
+.if-body p{font-size:12.5px;color:var(--text2);line-height:1.62;margin-bottom:9px}
+.if-body code{background:rgba(110,118,129,.22);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:11.5px;color:#e6edf3}
+.fix{border:1px solid var(--border-soft);border-radius:6px;overflow:hidden;margin-bottom:10px;background:var(--bg)}
+.fix-head{
+  display:flex;align-items:center;gap:6px;padding:5px 10px;font-size:11px;color:var(--muted);
+  background:var(--surface);border-bottom:1px solid var(--border-soft);
+}
+.fix-head svg{width:11px;height:11px;color:var(--green)}
+.fix pre{
+  padding:9px 11px;font-family:var(--mono);font-size:11.5px;line-height:1.65;
+  color:#c9e9d0;overflow-x:auto;white-space:pre;
+}
+.if-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.btn{
+  padding:5px 11px;border-radius:6px;font-size:12px;font-weight:550;
+  border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:.13s;
+}
+.btn:hover{background:#2d333b;border-color:#484f58;color:var(--text)}
+.btn.primary{background:#238636;border-color:rgba(240,246,252,.1);color:#fff}
+.btn.primary:hover{background:#2ea043}
+.btn.brand{background:rgba(163,113,247,.16);border-color:rgba(163,113,247,.4);color:#d2a8ff}
+.btn.brand:hover{background:rgba(163,113,247,.26)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:rgba(248,81,73,.12);color:#ff9492}
+.rule-meta{margin-left:auto;font-size:10.5px;color:#6e7681;font-family:var(--mono)}
+
+/* right panel */
+.panel{border-left:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;min-width:0}
+.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);flex:0 0 auto}
+.ph-row{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.ph-logo{
+  width:19px;height:19px;border-radius:5px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#6e40c9,#a371f7);flex:0 0 auto;
+}
+.ph-logo svg{width:11px;height:11px}
+.ph-name{font-size:13px;font-weight:640}
+.ph-time{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+.ph-stats{display:flex;gap:6px;font-size:11px;color:var(--muted)}
+.ph-stats b{color:var(--text2);font-weight:600}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.chip{
+  padding:3px 8px;border-radius:2em;font-size:11px;color:var(--muted);
+  border:1px solid var(--border-soft);background:var(--bg);transition:.13s;
+}
+.chip:hover{border-color:var(--border);color:var(--text2)}
+.chip.on{background:rgba(163,113,247,.15);border-color:rgba(163,113,247,.4);color:#d2a8ff}
+
+.panel-body{flex:1;overflow-y:auto;padding:10px 10px 16px}
+.fitem{
+  border:1px solid var(--border-soft);border-radius:7px;padding:9px 10px;margin-bottom:7px;
+  cursor:pointer;transition:.13s;background:var(--bg);
+}
+.fitem:hover{border-color:rgba(163,113,247,.4);background:rgba(163,113,247,.05)}
+.fitem .fr{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.fitem .ft{font-size:12px;color:var(--text2);line-height:1.45;font-weight:500}
+.fitem .fm{font-size:10.5px;color:#6e7681;font-family:var(--mono);margin-top:4px;display:flex;gap:8px}
+.fitem.suppressed{opacity:.6}
+.fitem.suppressed .ft{text-decoration:line-through;text-decoration-color:rgba(125,133,144,.5)}
+
+.sect-label{
+  font-size:10.5px;font-weight:650;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.6px;padding:12px 4px 7px;display:flex;align-items:center;gap:6px;
+}
+.sect-label .ln{flex:1;height:1px;background:var(--border-soft)}
+
+.gate{
+  border:1px dashed rgba(163,113,247,.3);border-radius:7px;background:rgba(163,113,247,.04);
+  padding:9px 11px;margin-top:4px;
+}
+.gate-top{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#d2a8ff;font-weight:560;cursor:pointer}
+.gate-top .cv{margin-left:auto;font-size:10px;color:var(--muted);transition:.2s}
+.gate.open .gate-top .cv{transform:rotate(180deg)}
+.gate-body{display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(163,113,247,.18)}
+.gate.open .gate-body{display:block}
+.gate-item{display:flex;gap:7px;font-size:11px;color:var(--muted);padding:4px 0;line-height:1.5}
+.gate-item code{font-family:var(--mono);font-size:10.5px;color:#8b949e;background:rgba(110,118,129,.16);padding:0 4px;border-radius:3px}
+.gate-c{font-family:var(--mono);font-size:10px;color:#6e7681;flex:0 0 32px;text-align:right}
+
+.panel-foot{flex:0 0 auto;border-top:1px solid var(--border);padding:10px 12px;background:var(--surface)}
+.pf-note{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+.pf-note b{color:var(--text2)}
+
+/* generic page layout for other views */
+.page{flex:1;overflow-y:auto;padding:32px 40px 60px}
+.page-inner{max-width:1080px;margin:0 auto}
+.page-h1{font-size:24px;font-weight:650;letter-spacing:-.4px;margin-bottom:6px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:28px;max-width:660px;line-height:1.65}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:650;letter-spacing:.5px;
+  text-transform:uppercase;color:#d2a8ff;margin-bottom:10px;
+}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{border:1px solid var(--border);border-radius:9px;padding:14px 16px;background:var(--surface)}
+.kpi-l{font-size:11.5px;color:var(--muted);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.kpi-v{font-size:27px;font-weight:660;letter-spacing:-.8px;font-variant-numeric:tabular-nums;line-height:1}
+.kpi-v small{font-size:13px;font-weight:500;color:var(--muted);margin-left:2px}
+.kpi-d{font-size:11px;margin-top:7px;display:flex;align-items:center;gap:4px}
+.up{color:var(--green)} .down{color:#ff9492}
+.kpi.hi{border-color:rgba(163,113,247,.35);background:linear-gradient(160deg,rgba(110,64,201,.12),var(--surface))}
+
+/* chart card */
+.card{border:1px solid var(--border);border-radius:9px;background:var(--surface);overflow:hidden;margin-bottom:18px}
+.card-h{padding:13px 16px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px}
+.card-t{font-size:13.5px;font-weight:600}
+.card-s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.card-b{padding:16px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{
+  text-align:left;font-size:11px;font-weight:600;color:var(--muted);padding:9px 12px;
+  border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;
+}
+td{padding:10px 12px;border-bottom:1px solid var(--border-soft);color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(110,118,129,.05)}
+td code{font-family:var(--mono);font-size:11.5px;color:#d2a8ff}
+.pill{padding:2px 8px;border-radius:2em;font-size:10.5px;font-weight:600;display:inline-block}
+.pill.on{background:rgba(63,185,80,.15);color:#56d364}
+.pill.mute{background:rgba(125,133,144,.15);color:#8b949e}
+.pill.shadow{background:rgba(88,166,255,.13);color:#79c0ff}
+.num-mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:11.5px}
+
+/* settings */
+.set-row{display:flex;gap:28px;padding:18px 0;border-bottom:1px solid var(--border-soft)}
+.set-row:last-child{border-bottom:none}
+.set-label{flex:0 0 240px}
+.set-label h4{font-size:13px;font-weight:600;margin-bottom:5px}
+.set-label p{font-size:11.5px;color:var(--muted);line-height:1.6}
+.set-ctrl{flex:1;min-width:0}
+.switch{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:12.5px;color:var(--text2)}
+.sw{
+  width:34px;height:20px;border-radius:2em;background:#30363d;position:relative;
+  flex:0 0 auto;transition:.18s;cursor:pointer;
+}
+.sw::after{
+  content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:#8b949e;transition:.18s;
+}
+.sw.on{background:rgba(163,113,247,.6)}
+.sw.on::after{left:16px;background:#fff}
+.rng{width:100%;accent-color:#a371f7;margin:8px 0 4px}
+.rng-v{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.gate-live{
+  margin-top:12px;padding:10px 13px;border-radius:7px;background:rgba(163,113,247,.08);
+  border:1px solid rgba(163,113,247,.25);font-size:12px;color:var(--text2);line-height:1.6;
+}
+.gate-live b{color:#d2a8ff;font-family:var(--mono)}
+.radio-grp{display:flex;flex-direction:column;gap:8px}
+.radio{
+  display:flex;gap:9px;padding:9px 12px;border:1px solid var(--border-soft);border-radius:7px;
+  font-size:12.5px;color:var(--text2);cursor:pointer;transition:.13s;align-items:flex-start;
+}
+.radio:hover{border-color:var(--border)}
+.radio.on{border-color:rgba(163,113,247,.45);background:rgba(163,113,247,.07)}
+.rdot{
+  width:14px;height:14px;border-radius:50%;border:1.5px solid #484f58;flex:0 0 auto;margin-top:2px;
+  display:grid;place-items:center;
+}
+.radio.on .rdot{border-color:var(--brand)}
+.radio.on .rdot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--brand)}
+.radio b{color:var(--text);font-weight:560;display:block;margin-bottom:1px}
+.radio span{font-size:11px;color:var(--muted);line-height:1.5}
+.scope-grp{display:flex;flex-wrap:wrap;gap:8px}
+.scope{
+  display:flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid var(--border-soft);
+  border-radius:7px;font-size:12px;color:var(--text2);cursor:pointer;
+}
+.scope.on{border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.07);color:#c9e9d0}
+.scope.off{opacity:.55;cursor:not-allowed}
+.tick{width:12px;height:12px;color:var(--green)}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.plan{border:1px solid var(--border);border-radius:11px;padding:20px;background:var(--surface);position:relative;display:flex;flex-direction:column}
+.plan.feat{border-color:rgba(163,113,247,.5);background:linear-gradient(170deg,rgba(110,64,201,.14),var(--surface) 55%);box-shadow:0 10px 40px rgba(110,64,201,.16)}
+.plan-tag{
+  position:absolute;top:-9px;left:20px;padding:2px 9px;border-radius:2em;font-size:10px;font-weight:700;
+  background:linear-gradient(90deg,#6e40c9,#a371f7);color:#fff;letter-spacing:.4px;
+}
+.plan h3{font-size:14px;font-weight:640;margin-bottom:3px}
+.plan .pdesc{font-size:11.5px;color:var(--muted);margin-bottom:14px;min-height:32px;line-height:1.5}
+.plan .price{font-size:30px;font-weight:680;letter-spacing:-1px;line-height:1}
+.plan .price small{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0}
+.plan ul{list-style:none;margin:16px 0 0;font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:8px}
+.plan li{display:flex;gap:7px;line-height:1.5}
+.plan li svg{width:12px;height:12px;flex:0 0 auto;margin-top:3px;color:var(--green)}
+.plan li.neg svg{color:var(--muted)}
+.quote{
+  border-left:2px solid rgba(163,113,247,.5);padding:4px 0 4px 16px;margin:0 0 26px;
+  font-size:14px;color:var(--text2);line-height:1.7;font-style:italic;
+}
+.quote cite{display:block;font-style:normal;font-size:11.5px;color:var(--muted);margin-top:7px}
+
+/* demo script */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:16px;position:relative;padding-bottom:22px}
+.step:last-child{padding-bottom:0}
+.step::before{
+  content:"";position:absolute;left:13px;top:30px;bottom:0;width:1px;background:var(--border);
+}
+.step:last-child::before{display:none}
+.step-n{
+  width:27px;height:27px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  font-size:12px;font-weight:700;background:rgba(163,113,247,.14);color:#d2a8ff;
+  border:1px solid rgba(163,113,247,.35);z-index:1;
+}
+.step-c{flex:1;min-width:0;padding-top:2px}
+.step-h{display:flex;align-items:baseline;gap:9px;margin-bottom:5px;flex-wrap:wrap}
+.step-h h4{font-size:13.5px;font-weight:600}
+.step-t{font-size:10.5px;color:var(--muted);font-family:var(--mono);padding:1px 6px;border:1px solid var(--border-soft);border-radius:4px}
+.step-c p{font-size:12.5px;color:var(--text2);line-height:1.68;margin-bottom:7px}
+.say{
+  border-left:2px solid rgba(88,166,255,.5);background:rgba(88,166,255,.05);
+  padding:9px 12px;border-radius:0 6px 6px 0;font-size:12.5px;color:#c9d8e8;line-height:1.68;margin:8px 0;
+}
+.say b{color:#79c0ff;font-weight:560;font-size:11px;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.do{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:flex-start;line-height:1.6}
+.do b{color:var(--text2);font-weight:560}
+
+/* Q&A */
+.qa{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-top:24px}
+.qa-h{padding:13px 16px;background:rgba(163,113,247,.08);border-bottom:1px solid var(--border-soft)}
+.qa-h h3{font-size:13.5px;font-weight:620;line-height:1.5}
+.qa-h p{font-size:11.5px;color:var(--muted);margin-top:4px}
+.qa-b{padding:16px}
+.layers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.layer{border:1px solid var(--border-soft);border-radius:8px;padding:13px;background:var(--bg)}
+.layer-l{font-size:10px;font-weight:700;letter-spacing:.5px;color:#d2a8ff;text-transform:uppercase;margin-bottom:7px}
+.layer h5{font-size:12.5px;font-weight:600;margin-bottom:6px;line-height:1.4}
+.layer p{font-size:11.5px;color:var(--muted);line-height:1.65}
+.layer .big{font-size:22px;font-weight:680;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.layer .big small{font-size:11px;font-weight:400;color:var(--muted)}
+
+/* modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(1,4,9,.78);backdrop-filter:blur(3px);
+  display:none;place-items:center;z-index:100;padding:24px;
+}
+.overlay.on{display:grid}
+.modal{
+  width:min(620px,100%);max-height:82vh;overflow-y:auto;background:var(--surface);
+  border:1px solid var(--border);border-radius:11px;box-shadow:0 24px 80px rgba(0,0,0,.6);
+}
+.modal-h{
+  padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;
+  position:sticky;top:0;background:var(--surface);
+}
+.modal-h h3{font-size:14px;font-weight:620;flex:1}
+.modal-x{width:24px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--muted)}
+.modal-x:hover{background:var(--surface2);color:var(--text)}
+.modal-b{padding:18px}
+
+/* posted comment mock */
+.cmt{border-left:2px solid rgba(163,113,247,.5);padding-left:14px}
+.cmt-h{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.cmt-h .who{font-size:12.5px;font-weight:600}
+.cmt-h .bot-tag{font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(163,113,247,.16);color:#d2a8ff;font-weight:650}
+.cmt-h .when{font-size:11px;color:var(--muted);margin-left:auto}
+.cmt-body{font-size:12.5px;color:var(--text2);line-height:1.75}
+.cmt-body table{margin:10px 0;font-size:11.5px}
+.cmt-body code{font-family:var(--mono);font-size:11px;background:rgba(110,118,129,.2);padding:1px 5px;border-radius:3px}
+.cmt-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);font-size:11px;color:var(--muted);display:flex;gap:12px}
+
+/* toast */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,26px);opacity:0;
+  background:#1f2a37;border:1px solid rgba(163,113,247,.45);border-radius:9px;
+  padding:11px 16px;font-size:12.5px;color:var(--text);z-index:200;
+  box-shadow:0 12px 36px rgba(0,0,0,.5);transition:.28s cubic-bezier(.2,.8,.3,1);
+  display:flex;align-items:center;gap:9px;max-width:min(520px,90vw);
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast svg{width:14px;height:14px;color:#56d364;flex:0 0 auto}
+#toast b{color:#d2a8ff}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:5px;border:2px solid var(--canvas)}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOPBAR ══════════ -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l7 3v6c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+    </div>
+    <div class="logo-txt">MergeWise<span>.ai</span></div>
+  </div>
+
+  <div class="crumb">
+    <b>acme</b> / <b>payments</b>
+    <span class="num">· PR #1842</span>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab on" data-v="pr"><span class="dot"></span>Pull request</button>
+    <button class="tab" data-v="dash">Insights</button>
+    <button class="tab" data-v="settings">Settings</button>
+    <button class="tab" data-v="pricing">Pricing</button>
+    <button class="tab" data-v="demo">演示脚本</button>
+  </nav>
+
+  <div class="topright">
+    <span style="font-size:11.5px;color:var(--muted)">3 repos connected</span>
+    <div class="avatar">ZJ</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ VIEW 1 · PR REVIEW ══════════ -->
+<section class="view on" id="v-pr">
+<div class="pr">
+
+  <!-- files -->
+  <aside class="files">
+    <div class="files-head">
+      <div class="files-title">
+        <span>Files changed <span style="color:var(--muted);font-weight:400">3</span></span>
+        <span><span class="stat-add">+64</span> <span class="stat-del">−18</span></span>
+      </div>
+    </div>
+    <div class="files-body">
+      <div class="file on">
+        <div class="fn">src/api/invoices.ts</div>
+        <div class="fd"><span class="stat-add">+31</span><span class="stat-del">−6</span></div>
+        <div class="count-badge">2</div>
+      </div>
+      <div class="file">
+        <div class="fn">src/lib/retry.ts</div>
+        <div class="fd"><span class="stat-add">+12</span><span class="stat-del">−4</span></div>
+        <div class="count-badge">1</div>
+      </div>
+      <div class="file">
+        <div class="fn">package.json</div>
+        <div class="fd"><span class="stat-add">+21</span><span class="stat-del">−8</span></div>
+      </div>
+
+      <div class="sect-label" style="padding:18px 4px 7px">这次没做 <span class="ln"></span></div>
+      <div style="font-size:11px;color:#6e7681;line-height:1.7;padding:0 4px">
+        style / naming / 格式类意见已全部跳过。<br>
+        交给 ESLint 和 Prettier。
+      </div>
+    </div>
+  </aside>
+
+  <!-- center -->
+  <div class="center">
+    <div class="pr-head">
+      <div class="pr-title-row">
+        <div>
+          <div class="pr-title">fix(invoices): 支持按明细汇总金额 <span class="num">#1842</span></div>
+        </div>
+        <span class="state">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878z"/></svg>
+          Open
+        </span>
+      </div>
+      <div class="pr-sub">
+        <b style="color:var(--text2);font-weight:560">lin.wei</b>
+        <span>wants to merge 4 commits into</span>
+        <span class="br">main</span>
+        <span>from</span>
+        <span class="br">feat/invoice-total</span>
+      </div>
+      <div class="pr-tabs">
+        <div class="pr-tab">Conversation <span class="cb">8</span></div>
+        <div class="pr-tab">Commits <span class="cb">4</span></div>
+        <div class="pr-tab">Checks <span class="cb">3</span></div>
+        <div class="pr-tab on">Files changed <span class="cb">3</span></div>
+      </div>
+    </div>
+
+    <div class="banner">
+      <svg class="bico" viewBox="0 0 16 16" fill="#f85149"><path d="M2.34 1.87A1.75 1.75 0 001.06 3.6v8.8c0 .97.78 1.75 1.75 1.75h11.38c.97 0 1.75-.78 1.75-1.75V3.6c0-.97-.78-1.75-1.75-1.75H2.34zm.22 1.5h10.88c.14 0 .25.11.25.25v8.76c0 .14-.11.25-.25.25H2.56a.25.25 0 01-.25-.25V3.62c0-.14.11-.25.25-.25z"/><path d="M8 4.7a.75.75 0 01.75.75v3.1a.75.75 0 01-1.5 0v-3.1A.75.75 0 018 4.7zm0 6.35a.9.9 0 100-1.8.9.9 0 000 1.8z"/></svg>
+      <span><b>MergeWise</b> 拦住 1 个阻断级问题</span>
+      <span class="bl">· 2 个高危 · 1 条缺测试进汇总 · 3 条低置信度已拦截 · 审查耗时 41s</span>
+      <span class="ba">
+        <button class="btn ghost" style="font-size:11.5px;color:var(--muted)" onclick="openModal()">查看已发布的评论</button>
+      </span>
+    </div>
+
+    <div class="diff-wrap" id="diffWrap">
+
+      <!-- ── file 1 ── -->
+      <div class="diff-file">
+        <div class="df-head">
+          <span class="caret">▾</span>
+          <span>src/api/invoices.ts</span>
+          <span class="dstat"><span class="stat-add">+31</span><span class="stat-del">−6</span></span>
+        </div>
+        <div class="hunk">@@ -1,6 +1,7 @@</div>
+
+        <div class="dl"><span class="ln">1</span><span class="sn"></span><span class="cd"><span class="kw">import</span> { db } <span class="kw">from</span> <span class="str">"../db"</span>;</span></div>
+        <div class="dl"><span class="ln">2</span><span class="sn"></span><span class="cd"><span class="kw">import</span> { Request, Response } <span class="kw">from</span> <span class="str">"express"</span>;</span></div>
+        <div class="dl add"><span class="ln">3</span><span class="sn">+</span><span class="cd"><span class="kw">import</span> { parseId } <span class="kw">from</span> <span class="str">"../lib/validate"</span>;</span></div>
+        <div class="dl"><span class="ln">4</span><span class="sn"></span><span class="cd"></span></div>
+        <div class="dl"><span class="ln">5</span><span class="sn"></span><span class="cd"><span class="kw">export async function</span> <span class="fn2">getInvoice</span>(req: Request, res: Response) {</span></div>
+        <div class="dl"><span class="ln">6</span><span class="sn"></span><span class="cd">  <span class="kw">const</span> id = req.query.id <span class="kw">as</span> <span class="vr">string</span>;</span></div>
+        <div class="dl del"><span class="ln"></span><span class="sn">−</span><span class="cd">  <span class="kw">const</span> invoice = <span class="kw">await</span> db.<span class="fn2">query</span>(</span></div>
+        <div class="dl del"><span class="ln"></span><span class="sn">−</span><span class="cd">    <span class="str">"SELECT * FROM invoices WHERE id = $1"</span>, [id]</span></div>
+        <div class="dl del"><span class="ln"></span><span class="sn">−</span><span class="cd">  );</span></div>
+        <div class="dl add"><span class="ln">7</span><span class="sn">+</span><span class="cd">  <span class="kw">const</span> invoice = <span class="kw">await</span> db.<span class="fn2">query</span>(</span></div>
+        <div class="dl add" id="line-sqli"><span class="ln">8</span><span class="sn">+</span><span class="cd">    <span class="str">`SELECT * FROM invoices WHERE id = ${id}`</span></span></div>
+        <div class="dl add"><span class="ln">9</span><span class="sn">+</span><span class="cd">  );</span></div>
+        <div class="dl"><span class="ln">10</span><span class="sn"></span><span class="cd">  <span class="kw">if</span> (!invoice) {</span></div>
+        <div class="dl"><span class="ln">11</span><span class="sn"></span><span class="cd">    <span class="kw">return</span> res.<span class="fn2">status</span>(404).<span class="fn2">json</span>({ error: <span class="str">"not found"</span> });</span></div>
+        <div class="dl"><span class="ln">12</span><span class="sn"></span><span class="cd">  }</span></div>
+        <div class="dl del"><span class="ln"></span><span class="sn">−</span><span class="cd">  <span class="kw">return</span> res.<span class="fn2">json</span>(invoice.rows[0]);</span></div>
+        <div class="dl add" id="line-null"><span class="ln">13</span><span class="sn">+</span><span class="cd">  <span class="kw">const</span> lineItems = invoice.rows[0].line_items;</span></div>
+        <div class="dl add"><span class="ln">14</span><span class="sn">+</span><span class="cd">  <span class="kw">return</span> res.<span class="fn2">json</span>({ ...invoice.rows[0], total: lineItems.length });</span></div>
+        <div class="dl"><span class="ln">15</span><span class="sn"></span><span class="cd">}</span></div>
+
+        <!-- INLINE FINDING P0 -->
+        <div class="inline-finding" id="cf1">
+          <div class="if-head">
+            <span class="sev p0">P0 · Security</span>
+            <span class="if-title">SQL 注入：请求参数被拼进查询字符串</span>
+            <span class="conf">置信度 <b>0.97</b></span>
+          </div>
+          <div class="if-body">
+            <p><code>req.query.id</code> 未做任何校验，直接进入模板字符串。攻击者传 <code>?id=1 OR 1=1</code> 即可读出整张 <code>invoices</code> 表，<code>?id=1;DROP TABLE invoices--</code> 可造成破坏。原实现用的是参数化占位符 <code>$1</code>，这次改动把它退化了。</p>
+            <div class="fix">
+              <div class="fix-head">
+                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+                建议修复 · 已生成可直接应用的 diff
+              </div>
+<pre><span class="kw">const</span> id = <span class="fn2">parseId</span>(req.query.id);
+<span class="kw">const</span> invoice = <span class="kw">await</span> db.<span class="fn2">query</span>(
+  <span class="str">"SELECT * FROM invoices WHERE id = $1"</span>, [id]
+);</pre>
+            </div>
+            <div class="if-actions">
+              <button class="btn primary" style="font-size:11.5px;padding:4px 10px">Apply suggestion</button>
+              <button class="btn" style="font-size:11.5px;padding:4px 10px">Open in editor</button>
+              <button class="btn ghost" style="font-size:11.5px;padding:4px 10px" onclick="markFP('cf1',this)" title="或回复 @mergewise mute this">👎 误报</button>
+              <span class="rule-meta">rule sql-injection/v3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- INLINE FINDING P1 -->
+        <div class="inline-finding" id="cf2">
+          <div class="if-head">
+            <span class="sev p1">P1 · Bug</span>
+            <span class="if-title">404 分支是死代码，空结果会抛 TypeError</span>
+            <span class="conf">置信度 <b>0.89</b></span>
+          </div>
+          <div class="if-body">
+            <p><code>db.query()</code> 返回 Result 对象，恒为真值，所以第 10 行的 <code>if (!invoice)</code> 永远不成立。真正需要判空的是 <code>invoice.rows[0]</code>：查不到记录时它 <code>undefined</code>，<code>.line_items</code> 直接抛 <code>TypeError</code>，用户看到 500 而不是 404。</p>
+            <div class="fix">
+              <div class="fix-head">
+                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+                建议修复
+              </div>
+<pre><span class="kw">const</span> row = invoice.rows[0];
+<span class="kw">if</span> (!row) {
+  <span class="kw">return</span> res.<span class="fn2">status</span>(404).<span class="fn2">json</span>({ error: <span class="str">"not found"</span> });
+}
+<span class="kw">return</span> res.<span class="fn2">json</span>({ ...row, total: row.line_items?.length ?? 0 });</pre>
+            </div>
+            <div class="if-actions">
+              <button class="btn primary" style="font-size:11.5px;padding:4px 10px">Apply suggestion</button>
+              <button class="btn ghost" style="font-size:11.5px;padding:4px 10px" onclick="markFP('cf2',this)" title="或回复 @mergewise mute this">👎 误报</button>
+              <span class="rule-meta">rule null-deref/v5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── file 2 ── -->
+      <div class="diff-file">
+        <div class="df-head">
+          <span class="caret">▾</span>
+          <span>src/lib/retry.ts</span>
+          <span class="dstat"><span class="stat-add">+12</span><span class="stat-del">−4</span></span>
+        </div>
+        <div class="hunk">@@ -8,9 +8,10 @@ export async function withRetry&lt;T&gt;(fn, maxRetries = 3)</div>
+
+        <div class="dl"><span class="ln">8</span><span class="sn"></span><span class="cd">  <span class="kw">let</span> lastError: <span class="vr">unknown</span>;</span></div>
+        <div class="dl del"><span class="ln"></span><span class="sn">−</span><span class="cd">  <span class="kw">for</span> (<span class="kw">let</span> i = 0; i &lt; maxRetries; i++) {</span></div>
+        <div class="dl add" id="line-retry"><span class="ln">9</span><span class="sn">+</span><span class="cd">  <span class="kw">for</span> (<span class="kw">let</span> i = 0; i &lt;= maxRetries; i++) {</span></div>
+        <div class="dl"><span class="ln">10</span><span class="sn"></span><span class="cd">    <span class="kw">try</span> {</span></div>
+        <div class="dl"><span class="ln">11</span><span class="sn"></span><span class="cd">      <span class="kw">return await</span> <span class="fn2">fn</span>();</span></div>
+        <div class="dl"><span class="ln">12</span><span class="sn"></span><span class="cd">    } <span class="kw">catch</span> (err) {</span></div>
+        <div class="dl"><span class="ln">13</span><span class="sn"></span><span class="cd">      lastError = err;</span></div>
+        <div class="dl add"><span class="ln">14</span><span class="sn">+</span><span class="cd">      <span class="kw">await</span> <span class="fn2">sleep</span>(<span class="vr">2</span> ** i * <span class="vr">100</span>);</span></div>
+        <div class="dl"><span class="ln">15</span><span class="sn"></span><span class="cd">    }</span></div>
+        <div class="dl"><span class="ln">16</span><span class="sn"></span><span class="cd">  }</span></div>
+        <div class="dl"><span class="ln">17</span><span class="sn"></span><span class="cd">  <span class="kw">throw</span> lastError;</span></div>
+
+        <div class="inline-finding" id="cf3">
+          <div class="if-head">
+            <span class="sev p1">P1 · Bug</span>
+            <span class="if-title">maxRetries 实际会执行 maxRetries + 1 次</span>
+            <span class="conf">置信度 <b>0.93</b></span>
+          </div>
+          <div class="if-body">
+            <p>条件是 <code>i &lt;= maxRetries</code>。默认值 3 时会跑 4 次，与函数名和调用方（<code>withRetry(fn, 3)</code> 期望最多 3 次）不符。叠加新增的指数退避，最坏情况挂起 100+200+400+800 = 1.5s，比预期多一倍。</p>
+            <div class="if-actions">
+              <button class="btn primary" style="font-size:11.5px;padding:4px 10px">Apply fix</button>
+              <button class="btn ghost" style="font-size:11.5px;padding:4px 10px" onclick="markFP('cf3',this)" title="或回复 @mergewise mute this">👎 误报</button>
+              <span class="rule-meta">rule off-by-one/v2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── file 3 ── -->
+      <div class="diff-file">
+        <div class="df-head">
+          <span class="caret">▸</span>
+          <span>package.json</span>
+          <span class="dstat"><span class="stat-add">+21</span><span class="stat-del">−8</span></span>
+        </div>
+        <div class="hunk">@@ -14,6 +14,9 @@</div>
+        <div class="dl"><span class="ln">14</span><span class="sn"></span><span class="cd">  <span class="str">"dependencies"</span>: {</span></div>
+        <div class="dl add"><span class="ln">15</span><span class="sn">+</span><span class="cd">    <span class="str">"zod"</span>: <span class="str">"^3.23.8"</span>,</span></div>
+        <div class="dl add"><span class="ln">16</span><span class="sn">+</span><span class="cd">    <span class="str">"p-retry"</span>: <span class="str">"^6.2.0"</span>,</span></div>
+        <div class="dl"><span class="ln">17</span><span class="sn"></span><span class="cd">  },</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- right panel -->
+  <aside class="panel">
+    <div class="panel-head">
+      <div class="ph-row">
+        <div class="ph-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/></svg>
+        </div>
+        <div class="ph-name">MergeWise Review</div>
+        <div class="ph-time">41s</div>
+      </div>
+      <div class="ph-stats">
+        <span><b>3</b> 条行内评论</span>
+        <span>·</span>
+        <span><b>1</b> 条汇总</span>
+        <span>·</span>
+        <span><b>3</b> 条被门槛拦截</span>
+        <span>·</span>
+        <span><b>0</b> 条 style 噪音</span>
+      </div>
+      <div class="chips">
+        <button class="chip on">全部 3</button>
+        <button class="chip">阻断 1</button>
+        <button class="chip">高危 2</button>
+        <button class="chip">缺测试 1</button>
+        <button class="chip">已拦截 3</button>
+      </div>
+    </div>
+
+    <div class="panel-body">
+
+      <div class="sect-label">已发布到 PR <span class="ln"></span></div>
+
+      <div class="fitem" onclick="jump('cf1')">
+        <div class="fr"><span class="sev p0">P0</span><span style="font-size:10.5px;color:#6e7681;font-family:var(--mono)">invoices.ts:8</span></div>
+        <div class="ft">SQL 注入：请求参数拼进查询字符串</div>
+        <div class="fm"><span>0.97</span><span>·</span><span>你正在看的这条</span></div>
+      </div>
+
+      <div class="fitem" onclick="jump('cf2')">
+        <div class="fr"><span class="sev p1">P1</span><span style="font-size:10.5px;color:#6e7681;font-family:var(--mono)">invoices.ts:13</span></div>
+        <div class="ft">404 分支是死代码，空结果抛 TypeError</div>
+        <div class="fm"><span>0.89</span><span>·</span><span>建议一并修掉</span></div>
+      </div>
+
+      <div class="fitem" onclick="jump('cf3')">
+        <div class="fr"><span class="sev p1">P1</span><span style="font-size:10.5px;color:#6e7681;font-family:var(--mono)">retry.ts:9</span></div>
+        <div class="ft">maxRetries 实际执行 maxRetries + 1 次</div>
+        <div class="fm"><span>0.93</span><span>·</span><span>另一文件</span></div>
+      </div>
+
+      <div class="fitem" style="border-style:dashed" onclick="openModal()">
+        <div class="fr"><span class="sev p2">P2</span><span style="font-size:10.5px;color:#6e7681;font-family:var(--mono)">汇总在评论里</span></div>
+        <div class="ft">新增 12 行分支逻辑，对应 0 个测试</div>
+        <div class="fm"><span>0.84</span><span>·</span><span>不单独开评论，避免刷屏</span></div>
+      </div>
+
+      <div class="sect-label">被置信度门槛拦下 <span class="ln"></span></div>
+
+      <div class="gate open" id="gateBox">
+        <div class="gate-top" onclick="document.getElementById('gateBox').classList.toggle('open')">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3.5 3.5 0 00-3.5 3.5V7H4a1 1 0 00-1 1v6a1 1 0 001 1h8a1 1 0 001-1V8a1 1 0 00-1-1h-.5V4.5A3.5 3.5 0 008 1zm2 6H6V4.5a2 2 0 114 0V7z"/></svg>
+          3 条未达阈值（0.80），没有发到 PR
+          <span class="cv">▾</span>
+        </div>
+        <div class="gate-body">
+          <div class="gate-item">
+            <span class="gate-c">0.61</span>
+            <div>建议 <code>invoice.rows[0]?.line_items</code> 用可选链 —— 与 P1 重叠，已被上面那条覆盖</div>
+          </div>
+          <div class="gate-item">
+            <span class="gate-c">0.44</span>
+            <div>变量命名 <code>lineItems</code> 与文件内既有 <code>items</code> 不一致 —— style 类，不在审查范围</div>
+          </div>
+          <div class="gate-item">
+            <span class="gate-c">0.38</span>
+            <div>公开函数缺 JSDoc —— 项目未强制，历史 480 次触发中 40% 被标为误报，规则已降权</div>
+          </div>
+          <div style="margin-top:9px;padding-top:8px;border-top:1px solid rgba(163,113,247,.18);font-size:10.5px;color:#6e7681;line-height:1.6">
+            这些仍会写进 <b style="color:var(--text2)">Insights → 待观察池</b>，用来下一轮校准阈值，但不打扰写代码的人。
+          </div>
+        </div>
+      </div>
+
+      <div class="sect-label">现场可以对比 <span class="ln"></span></div>
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.7;padding:0 4px 6px">
+        CodeRabbit / Copilot 在这个 PR 上平均会留 <b style="color:var(--text2)">6–9 条</b> 评论，其中 3–4 条是命名和格式。
+      </div>
+
+    </div>
+
+    <div class="panel-foot">
+      <div class="pf-note">评论策略：<b>P0 / P1 贴行 inline</b>，P2 并入 <b>1 条 summary</b>。当前 PR 共 3 条行内 + 1 条汇总，无其他打扰。</div>
+      <button class="btn brand" style="width:100%;justify-content:center;display:flex;align-items:center;gap:7px" onclick="openModal()">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0113.25 12H9.06l-2.573 2.573A1.458 1.458 0 014 13.543V12H2.75A1.75 1.75 0 011 10.25v-7.5z"/></svg>
+        查看已发布的 PR 评论
+      </button>
+    </div>
+  </aside>
+
+</div>
+</section>
+
+<!-- ══════════ VIEW 2 · INSIGHTS ══════════ -->
+<section class="view" id="v-dash">
+<div class="page"><div class="page-inner">
+  <div class="eyebrow">Insights · 近 30 天</div>
+  <div class="page-h1">acme/payments 的审查质量</div>
+  <div class="page-sub">这页是回答"误报率要多低才敢让它常驻"的证据。核心不是准确率有多高，而是误报被反馈后会不会持续下降。</div>
+
+  <div class="kpis">
+    <div class="kpi hi">
+      <div class="kpi-l">误报率 <span style="color:#6e7681" title="被标 👎（误报）的比例">ⓘ</span></div>
+      <div class="kpi-v">3.2<small>%</small></div>
+      <div class="kpi-d up">
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3l5 6H9v4H7V9H3z"/></svg>
+        30 天前 11.8%
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">采纳率</div>
+      <div class="kpi-v">68<small>%</small></div>
+      <div class="kpi-d up">找到的问题被修掉或标为有效</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">首条结论耗时</div>
+      <div class="kpi-v">41<small>s</small></div>
+      <div class="kpi-d" style="color:var(--muted)">p95 1m 12s</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">每 PR 评论数</div>
+      <div class="kpi-v">1.2<small>条</small></div>
+      <div class="kpi-d" style="color:var(--muted)">同行 6–9 条</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div style="flex:1">
+        <div class="card-t">误报率随反馈闭环的收敛曲线</div>
+        <div class="card-s">每次 👎 / 采纳都会回流成规则权重，抑制规则在同类代码上不再触发</div>
+      </div>
+      <span class="pill on">持续下降</span>
+    </div>
+    <div class="card-b">
+      <svg viewBox="0 0 880 200" style="width:100%;height:auto">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a371f7" stop-opacity=".32"/>
+            <stop offset="100%" stop-color="#a371f7" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#21262d" stroke-width="1">
+          <line x1="50" y1="20" x2="860" y2="20"/>
+          <line x1="50" y1="65" x2="860" y2="65"/>
+          <line x1="50" y1="110" x2="860" y2="110"/>
+          <line x1="50" y1="155" x2="860" y2="155"/>
+        </g>
+        <g fill="#6e7681" font-size="10" font-family="ui-monospace,monospace">
+          <text x="14" y="24">12%</text>
+          <text x="14" y="69">8%</text>
+          <text x="14" y="114">4%</text>
+          <text x="14" y="159">0%</text>
+          <text x="50" y="180">W1</text>
+          <text x="180" y="180">W2</text>
+          <text x="310" y="180">W3</text>
+          <text x="440" y="180">W4</text>
+          <text x="570" y="180">W5</text>
+          <text x="700" y="180">W6</text>
+          <text x="820" y="180">W7</text>
+        </g>
+        <path d="M55,32 L185,72 L315,101 L445,119 L575,128 L705,133 L845,139 L845,155 L55,155 Z" fill="url(#g1)"/>
+        <polyline points="55,32 185,72 315,101 445,119 575,128 705,133 845,139"
+          fill="none" stroke="#a371f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <g fill="#a371f7">
+          <circle cx="55" cy="32" r="3.5"/><circle cx="185" cy="72" r="3.5"/>
+          <circle cx="315" cy="101" r="3.5"/><circle cx="445" cy="119" r="3.5"/>
+          <circle cx="575" cy="128" r="3.5"/><circle cx="705" cy="133" r="3.5"/>
+        </g>
+        <circle cx="845" cy="139" r="5" fill="#a371f7"/>
+        <circle cx="845" cy="139" r="9" fill="none" stroke="#a371f7" stroke-opacity=".4"/>
+        <g font-size="11" font-family="ui-monospace,monospace" fill="#d2a8ff">
+          <text x="800" y="125">3.2%</text>
+        </g>
+        <line x1="50" y1="128" x2="860" y2="128" stroke="#3fb950" stroke-dasharray="4 4" stroke-opacity=".55"/>
+        <text x="600" y="122" fill="#56d364" font-size="10" font-family="ui-monospace,monospace">团队可接受上限 4%</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div style="flex:1">
+        <div class="card-t">规则级表现</div>
+        <div class="card-s">误报率 > 15% 的规则会自动降权，> 30% 自动静音并进入待复核</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Rule</th><th>触发</th><th>误报</th><th>误报率</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>sql-injection/v3</code></td><td class="num-mono">214</td><td class="num-mono">2</td><td class="num-mono" style="color:#56d364">0.9%</td><td><span class="pill on">enabled</span></td></tr>
+        <tr><td><code>null-deref/v5</code></td><td class="num-mono">388</td><td class="num-mono">9</td><td class="num-mono" style="color:#56d364">2.3%</td><td><span class="pill on">enabled</span></td></tr>
+        <tr><td><code>off-by-one/v2</code></td><td class="num-mono">96</td><td class="num-mono">7</td><td class="num-mono">7.3%</td><td><span class="pill on">enabled</span></td></tr>
+        <tr><td><code>missing-test/v4</code></td><td class="num-mono">512</td><td class="num-mono">31</td><td class="num-mono">6.1%</td><td><span class="pill on">enabled</span></td></tr>
+        <tr><td><code>naming-consistency/v1</code></td><td class="num-mono">1,204</td><td class="num-mono">481</td><td class="num-mono" style="color:#ff9492">39.9%</td><td><span class="pill mute">muted</span></td></tr>
+        <tr><td><code>jsdoc-required/v1</code></td><td class="num-mono">640</td><td class="num-mono">307</td><td class="num-mono" style="color:#ff9492">48.0%</td><td><span class="pill mute">muted</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div style="flex:1"><div class="card-t">仓库接入方式</div>
+      <div class="card-s">新仓库默认先进 shadow 模式：只记录不评论，用你们自己的代码校准 2 周</div></div></div>
+    <table>
+      <thead><tr><th>仓库</th><th>模式</th><th>30 天 PR</th><th>拦截 P0</th><th>误报率</th></tr></thead>
+      <tbody>
+        <tr><td><code>acme/payments</code></td><td><span class="pill on">commenting</span></td><td class="num-mono">186</td><td class="num-mono">3</td><td class="num-mono">3.2%</td></tr>
+        <tr><td><code>acme/web</code></td><td><span class="pill on">commenting</span></td><td class="num-mono">342</td><td class="num-mono">1</td><td class="num-mono">4.1%</td></tr>
+        <tr><td><code>acme/infra</code></td><td><span class="pill shadow">shadow · 第 9 天</span></td><td class="num-mono">41</td><td class="num-mono">—</td><td class="num-mono">9.6% → 校准中</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div></div>
+</section>
+
+<!-- ══════════ VIEW 3 · SETTINGS ══════════ -->
+<section class="view" id="v-settings">
+<div class="page"><div class="page-inner" style="max-width:880px">
+  <div class="eyebrow">Settings · acme/payments</div>
+  <div class="page-h1">先把噪音关到最低，再谈覆盖率</div>
+  <div class="page-sub">所有设置都是仓库级的。现场可以边讲边拖这个滑块，实时看到它砍掉多少条评论。</div>
+
+  <div class="card"><div class="card-b" style="padding:6px 20px">
+
+    <div class="set-row">
+      <div class="set-label">
+        <h4>置信度门槛</h4>
+        <p>低于阈值的 finding 不进 PR 评论，只写进待观察池。</p>
+      </div>
+      <div class="set-ctrl">
+        <input type="range" class="rng" min="50" max="99" value="80" id="gateRange" oninput="updateGate(this.value)">
+        <div class="rng-v"><span>0.50 更探索</span><span id="gateVal" style="color:#d2a8ff;font-weight:600">0.80</span><span>0.99 更保守</span></div>
+        <div class="gate-live" id="gateLive">
+          当前 <b>0.80</b>：过去 30 天会发出 <b>4,182</b> 条评论中的 <b>61%</b>，其余 <b>1,631</b> 条被拦。<br>
+          按你们每小时 ~9 条 review 的节奏，约等于 <b>每 PR 1.2 条</b>。
+        </div>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="set-label">
+        <h4>评论策略</h4>
+        <p>决定一个 PR 里出现几条通知。这是降噪最关键的一项。</p>
+      </div>
+      <div class="set-ctrl">
+        <div class="radio-grp">
+          <div class="radio on" onclick="pickRadio(this)">
+            <div class="rdot"></div>
+            <div><b>P0 单条 inline，其余合并成 1 条 summary</b>
+              <span>推荐。P0/P1 贴着代码出现，低优先级只进汇总 —— 整个 PR 约 3 条行内 + 1 条汇总</span></div>
+          </div>
+          <div class="radio" onclick="pickRadio(this)">
+            <div class="rdot"></div>
+            <div><b>全部 inline</b>
+              <span>信息最全，但 PR 会被刷屏。只建议在 < 5 个文件的小 PR 上开</span></div>
+          </div>
+          <div class="radio" onclick="pickRadio(this)">
+            <div class="rdot"></div>
+            <div><b>只发 summary 一条</b>
+              <span>最安静，但 P0 不贴代码，容易漏看。适合对噪音极敏感的团队</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="set-label">
+        <h4>审查范围</h4>
+        <p>刻意只做三类。style 交给 ESLint，格式交给 Prettier。</p>
+      </div>
+      <div class="set-ctrl">
+        <div class="scope-grp">
+          <div class="scope on"><svg class="tick" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>Bug / 逻辑错误</div>
+          <div class="scope on"><svg class="tick" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>安全风险</div>
+          <div class="scope on"><svg class="tick" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>缺测试</div>
+          <div class="scope off">性能退化</div>
+          <div class="scope off">命名 / 风格</div>
+          <div class="scope off">注释 / 文档</div>
+          <div class="scope off">格式化</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="set-label">
+        <h4>误报反馈闭环</h4>
+        <p>点 👎（reaction）或回复 <code>@mergewise mute this</code>，就生成一条仓库级抑制规则。这是误报率能降下来的原因。</p>
+      </div>
+      <div class="set-ctrl">
+        <div class="switch"><div class="sw on" onclick="this.classList.toggle('on')"></div>
+          <span>点 👎 或回复 @mergewise mute this 时自动写入抑制规则（同类代码不再触发同一 rule）</span></div>
+        <div class="switch"><div class="sw on" onclick="this.classList.toggle('on')"></div>
+          <span>每周一把本周的误报汇总成一条 Slack 消息，让 TL 一次性复核</span></div>
+        <div class="switch"><div class="sw" onclick="this.classList.toggle('on')"></div>
+          <span>允许 MergeWise 在 PR 里回复"已修复"确认（默认关闭，减少打扰）</span></div>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="set-label">
+        <h4>跳过与预算</h4>
+        <p>避免在生成代码、迁移脚本上浪费额度和噪音。</p>
+      </div>
+      <div class="set-ctrl">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:7px">跳过路径</div>
+        <div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);background:var(--bg);border:1px solid var(--border-soft);border-radius:6px;padding:9px 11px;line-height:1.8">
+          <span style="color:#79c0ff">migrations/**</span> · <span style="color:#79c0ff">**/*.generated.ts</span> · <span style="color:#79c0ff">dist/**</span> · <span style="color:#79c0ff">**/*.snap</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin:14px 0 7px">每月额度上限</div>
+        <div class="switch"><div class="sw on" onclick="this.classList.toggle('on')"></div>
+          <span>达到上限后自动切到 shadow 模式（只记录，不停服务）</span></div>
+      </div>
+    </div>
+
+  </div></div>
+
+</div></div>
+</section>
+
+<!-- ══════════ VIEW 4 · PRICING ══════════ -->
+<section class="view" id="v-pricing">
+<div class="page"><div class="page-inner">
+  <div class="eyebrow">Pricing</div>
+  <div class="page-h1">按仓库收费，不按人头</div>
+  <div class="page-sub">买的人是 eng lead 和 platform 团队，不是每个开发者。按仓库计价让他们能直接批预算，不用走全员采购。</div>
+
+  <blockquote class="quote">
+    "the github pull requests are the part i would pay for"
+    <cite>— X 原帖回复，需求调研第 5 条 · 612 likes</cite>
+  </blockquote>
+
+  <div class="plans">
+    <div class="plan">
+      <h3>OSS / 个人</h3>
+      <div class="pdesc">公开仓库永久免费，用来积累口碑和案例</div>
+      <div class="price">$0</div>
+      <ul>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>无限公开仓库</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>P0 / P1 / 缺测试三类审查</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>聚合评论，PR 噪音 ≤ 2 条</li>
+        <li class="neg"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 8a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 013 8z"/></svg>无私仓库 / 无抑制规则</li>
+      </ul>
+    </div>
+
+    <div class="plan feat">
+      <div class="plan-tag">主推 · 现场报价</div>
+      <h3>Team</h3>
+      <div class="pdesc">2–50 人工程团队，私有仓库，按仓库月付</div>
+      <div class="price">$29 <small>/ 仓库 / 月</small></div>
+      <ul>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>无限私有仓库</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>置信度门槛 + 抑制规则 + 规则级静音</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>shadow 模式校准 2 周再开评论</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>Insights 误报率看板</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>可一键应用修复建议</li>
+      </ul>
+    </div>
+
+    <div class="plan">
+      <h3>Enterprise</h3>
+      <div class="pdesc">代码不出网，走自托管或 VPC</div>
+      <div class="price">定制</div>
+      <ul>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>自托管 / 私有化部署</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>可换自建模型 / 不让代码出网</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>自定义规则包 / 团队规则继承</li>
+        <li><svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>SSO / 审计日志 / SLA</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-b">
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.8">
+      <b style="color:var(--text)">现场会被问的两件事，答案先写在这：</b><br>
+      <b>1. 误报率怎么保证？</b> 不承诺绝对准确率，承诺"可收敛"：新仓库先 shadow 两周，用你们自己的代码 calibrate；上线后每次 👎 或 @mergewise mute this 都变成抑制规则；误报率看板对客户完全透明。<span style="color:var(--muted)">（原型里 Insights 页就是干这个的）</span><br>
+      <b>2. 代码会不会出网？</b> Team 版只发 diff 片段，不落库；Enterprise 版可完全私有化，模型也可以换成本地部署。
+    </div>
+  </div></div>
+
+</div></div>
+</section>
+
+<!-- ══════════ VIEW 5 · DEMO SCRIPT ══════════ -->
+<section class="view" id="v-demo">
+<div class="page"><div class="page-inner" style="max-width:820px">
+  <div class="eyebrow">Coffee Talk · 现场演示脚本</div>
+  <div class="page-h1">6 分钟讲完，留 4 分钟给那个问题</div>
+  <div class="page-sub">前一分钟不要讲产品，先让他们自己看这个 PR 里那条 SQL 注入。发现感比介绍更有说服力。</div>
+
+  <div class="card"><div class="card-b">
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-n">1</div>
+      <div class="step-c">
+        <div class="step-h"><h4>先不讲产品，直接开 PR 页面</h4><span class="step-t">60s</span></div>
+        <div class="say"><b>台词</b>这是你们会看到的一个普通 PR，改的是发票金额汇总。先别管这是什么工具 —— 你先看第 8 行。</div>
+        <div class="do"><b>操作：</b>停留在 PR 视图，鼠标划到 <code style="font-family:var(--mono);color:#d2a8ff">invoices.ts:8</code> 那一行红色横幅，不要点任何按钮。</div>
+        <p style="margin-top:8px">目的：让他们自己认出 <code style="font-family:var(--mono);font-size:11.5px;background:rgba(110,118,129,.2);padding:1px 5px;border-radius:3px">${id}</code> 拼进 SQL 是注入。认出的一瞬间，产品的价值就不用解释了。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">2</div>
+      <div class="step-c">
+        <div class="step-h"><h4>展示"它给的是修复，不是意见"</h4><span class="step-t">50s</span></div>
+        <div class="say"><b>台词</b>重点是它没有只说"这里有注入风险"，它给了可以直接 Apply 的 diff，一行点击就修完。审核的人只需要判断对错，不需要再动手。</div>
+        <div class="do"><b>操作：</b>指向"建议修复"代码块 → 再指 <b>Apply suggestion</b> 按钮。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">3</div>
+      <div class="step-c">
+        <div class="step-h"><h4>翻到右侧，讲降噪 <span style="color:#d2a8ff;font-size:11px">← 全场最关键的一步</span></h4><span class="step-t">90s</span></div>
+        <div class="say"><b>台词</b>这类工具死掉的原因不是找不到问题，是废话太多。所以这里做了三件事：第一，置信度不到 0.8 的问题根本不会发到 PR 上 —— 你看这里有 3 条被拦了；第二，缺测试这种低优先级的只进一条汇总评论，不单独刷屏；第三，命名和格式我们压根不做，那是 ESLint 的活。整个 PR 收到的就是 3 条行内 + 1 条汇总，而不是十来条。</div>
+        <div class="do"><b>操作：</b>依次点 <b>展开"3 条被门槛拦下"</b> → 指向 chip 区 <b>0 条 style 噪音</b> → 最后点 <b>查看已发布的 PR 评论</b> 弹出聚合评论。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">4</div>
+      <div class="step-c">
+        <div class="step-h"><h4>点一次 👎，把模糊承诺变成机制</h4><span class="step-t">60s</span></div>
+        <div class="say"><b>台词</b>误报一定会发生。区别是发生之后怎么办 —— 你点一次 👎 或回复 @mergewise mute this，它就变成一条仓库级抑制规则，同样的东西在这个仓库里不会再烦你第二次。所以误报率是往下走的，不是一条水平线。</div>
+        <div class="do"><b>操作：</b>点任一 finding 的 <b>👎 误报</b> → 出现 toast 提示 → 立刻切到 <b>Insights</b> 页，指着那条 11.8% → 3.2% 的下降曲线。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">5</div>
+      <div class="step-c">
+        <div class="step-h"><h4>用 shadow 模式拆掉"不敢开"的心理门槛</h4><span class="step-t">60s</span></div>
+        <div class="say"><b>台词</b>你可能还是不敢第一天就让它评论。所以新仓库默认先进 shadow 模式：两周内它只在后台跑、记录、不评论，用你们自己的代码把阈值校准到合适的位置，你看过报告再按开关。</div>
+        <div class="do"><b>操作：</b>Insights 页底部 <b>acme/infra · shadow · 第 9 天</b> 那一行。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">6</div>
+      <div class="step-c">
+        <div class="step-h"><h4>收口到定价和下一步</h4><span class="step-t">60s</span></div>
+        <div class="say"><b>台词</b>按仓库收费，$29 一个仓库一个月，不用走全员采购。你们现在有几个仓库是希望 review 覆盖到的？我可以先把其中两个开成 shadow，两周后给你一份误报率报告，你再决定要不要开评论。</div>
+        <div class="do"><b>操作：</b>切 <b>Pricing</b> 页 → 停在 Team 卡上，不要继续往下滚。</div>
+      </div>
+    </div>
+
+  </div>
+  </div></div>
+
+  <div class="qa">
+    <div class="qa-h">
+      <h3>"AI Review 的误报率要低到多少，开发者才愿意让它持续跑在团队仓库里？"</h3>
+      <p>这是现场那道题，也是这个产品唯一真正的护城河。分三层回答，从数据到机制再到商业。</p>
+    </div>
+    <div class="qa-b">
+      <div class="layers">
+        <div class="layer">
+          <div class="layer-l">第一层 · 数字</div>
+          <h5>不是"多低"，是"每 PR 几条"</h5>
+          <p><span class="big">≤ 2 <small>条 / PR</small></span></p>
+          <p style="margin-top:8px">开发者感知的不是百分比，是打扰次数。误报率 5% 但一个 PR 出 12 条评论，比误报率 10% 只出 1 条更容易被关掉。所以我们优化的是每 PR 评论数。</p>
+        </div>
+        <div class="layer">
+          <div class="layer-l">第二层 · 机制</div>
+          <h5>误报必须能收敛</h5>
+          <p>承诺的不是准确率，是斜率。每一次 👎 都回流成抑制规则，误报率随使用下降 —— 这就是敢承诺"两周试用"的底气。静态准确率是高是低，客户都无法验证；下降曲线可以。</p>
+        </div>
+        <div class="layer">
+          <div class="layer-l">第三层 · 商业</div>
+          <h5>决定开关的是 TL，不是每个开发者</h5>
+          <p>真正会去点关闭的是 TL 和平台团队 —— 他们怕的是"团队把 bot 静音了，钱白花"。所以产品要给他们一个可汇报的指标：误报率看板 + shadow 报告。这才是续费理由。</p>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:13px 14px;border:1px solid var(--border-soft);border-radius:8px;background:var(--bg)">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.5px;color:#d2a8ff;text-transform:uppercase;margin-bottom:7px">如果被追问"那你到底比 CodeRabbit 好在哪"</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.75">
+          不要比准确率，比<span style="color:#e6edf3">噪音预算</span>：我们默认只发 1–2 条评论、默认不做 style、默认先 shadow。<b style="color:#e6edf3">他们把"发现问题"当卖点，我们把"少打扰"当卖点。</b>另外我们给的是可 Apply 的修复，不是建议 —— 这直接决定了采纳率高不高。
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+</section>
+
+</main>
+
+<!-- ══════════ MODAL ══════════ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-h">
+      <div class="ph-logo" style="width:22px;height:22px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/></svg>
+      </div>
+      <h3>MergeWise 在这个 PR 上发布的唯一一条 summary</h3>
+      <button class="modal-x" onclick="closeModal()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z"/></svg>
+      </button>
+    </div>
+    <div class="modal-b">
+      <div class="cmt">
+        <div class="cmt-h">
+          <div class="avatar" style="width:20px;height:20px;font-size:9px;background:linear-gradient(145deg,#6e40c9,#a371f7)">DG</div>
+          <span class="who">diffguard-ai</span>
+          <span class="bot-tag">bot</span>
+          <span class="when">41 秒前</span>
+        </div>
+        <div class="cmt-body">
+          <p style="margin-bottom:10px"><b style="color:#e6edf3">## MergeWise Review</b><br>
+          <span style="color:var(--muted);font-size:11.5px">2 findings · 1 blocking · 3 low-confidence findings withheld</span></p>
+
+          <table>
+            <thead><tr><th style="padding:6px 8px">级别</th><th style="padding:6px 8px">位置</th><th style="padding:6px 8px">问题</th><th style="padding:6px 8px">置信度</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:6px 8px"><span class="sev p0">P0</span></td><td style="padding:6px 8px"><code>invoices.ts:8</code></td><td style="padding:6px 8px">SQL 注入，参数拼进查询字符串</td><td style="padding:6px 8px" class="num-mono">0.97</td></tr>
+              <tr><td style="padding:6px 8px"><span class="sev p1">P1</span></td><td style="padding:6px 8px"><code>invoices.ts:13</code></td><td style="padding:6px 8px">404 分支死代码，空结果抛 TypeError</td><td style="padding:6px 8px" class="num-mono">0.89</td></tr>
+              <tr><td style="padding:6px 8px"><span class="sev p1">P1</span></td><td style="padding:6px 8px"><code>retry.ts:9</code></td><td style="padding:6px 8px">重试次数多执行 1 次</td><td style="padding:6px 8px" class="num-mono">0.93</td></tr>
+              <tr><td style="padding:6px 8px"><span class="sev p2">P2</span></td><td style="padding:6px 8px"><code>invoices.ts</code></td><td style="padding:6px 8px">新增 12 行分支逻辑无测试覆盖</td><td style="padding:6px 8px" class="num-mono">0.84</td></tr>
+            </tbody>
+          </table>
+
+          <p style="margin:12px 0 6px;font-size:12px"><b style="color:#e6edf3">被门槛拦下（置信度 &lt; 0.80，不打扰）</b></p>
+          <p style="font-size:11.5px;color:var(--muted);line-height:1.75">
+            可选链建议 0.61 · 变量命名一致性 0.44 · 缺 JSDoc 0.38<br>
+            这些已记入 Insights → 待观察池，用于下一轮阈值校准。
+          </p>
+
+          <p style="margin:14px 0 6px;font-size:12px"><b style="color:#e6edf3">没有检查的内容</b></p>
+          <p style="font-size:11.5px;color:var(--muted);line-height:1.75">
+            style / 命名 / 格式化 —— 交给 ESLint 与 Prettier。
+          </p>
+
+          <div class="cmt-foot">
+            <span>👍 3</span><span>👎 0</span>
+            <span style="color:#6e7681">· 回复 @mergewise mute this 静音此类</span>
+            <span style="margin-left:auto;color:#6e7681">rule sql-injection/v3 · null-deref/v5 · off-by-one/v2 · missing-test/v4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">
+  <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+/* ---- view switching ---- */
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on')});
+    t.classList.add('on');
+    var v = document.getElementById('v-' + t.dataset.v);
+    if(v) v.classList.add('on');
+  });
+});
+
+/* ---- jump to finding ---- */
+function jump(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+  document.querySelectorAll('.inline-finding').forEach(function(x){x.classList.remove('flash')});
+  el.classList.add('flash');
+  setTimeout(function(){el.classList.remove('flash')}, 2200);
+  var lineMap = {cf1:'line-sqli', cf2:'line-null', cf3:'line-retry'};
+  var ln = document.getElementById(lineMap[id]);
+  if(ln){
+    ln.classList.add('hl');
+    setTimeout(function(){ln.classList.remove('hl')}, 2200);
+  }
+}
+
+/* ---- mark false positive ---- */
+var fpCount = 0;
+function markFP(cardId, btn){
+  var card = document.getElementById(cardId);
+  if(!card) return;
+  card.classList.add('dim');
+  var rule = card.querySelector('.rule-meta');
+  var ruleName = rule ? rule.textContent.replace('rule ','') : 'this rule';
+  card.querySelectorAll('.btn').forEach(function(b){
+    if(b.textContent.trim() === '👎 误报'){
+      b.textContent = '已标记误报 ✓';
+      b.style.color = '#56d364';
+      b.disabled = true;
+    }
+  });
+  fpCount++;
+  showToast('已生成抑制规则 <b>' + ruleName + '</b> · 同类代码不再触发，误报率看板已更新');
+}
+
+/* ---- toast ---- */
+var toastTimer;
+function showToast(msg){
+  var t = document.getElementById('toast');
+  document.getElementById('toastMsg').innerHTML = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){t.classList.remove('on')}, 4200);
+}
+
+/* ---- modal ---- */
+function openModal(){ document.getElementById('overlay').classList.add('on'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('on'); }
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+/* ---- settings ---- */
+function updateGate(v){
+  var f = (v/100).toFixed(2);
+  document.getElementById('gateVal').textContent = f;
+  var pct, blocked, perPr;
+  if(v < 60){ pct = 88; blocked = 502; perPr = '2.9'; }
+  else if(v < 70){ pct = 81; blocked = 795; perPr = '2.4'; }
+  else if(v < 80){ pct = 72; blocked = 1171; perPr = '1.7'; }
+  else if(v < 85){ pct = 61; blocked = 1631; perPr = '1.2'; }
+  else if(v < 90){ pct = 47; blocked = 2217; perPr = '0.9'; }
+  else if(v < 95){ pct = 31; blocked = 2886; perPr = '0.6'; }
+  else { pct = 14; blocked = 3596; perPr = '0.3'; }
+  document.getElementById('gateLive').innerHTML =
+    '当前 <b>' + f + '</b>：过去 30 天会发出 <b>4,182</b> 条评论中的 <b>' + pct + '%</b>，其余 <b>' +
+    blocked.toLocaleString() + '</b> 条被拦。<br>按你们每小时 ~9 条 review 的节奏，约等于 <b>每 PR ' +
+    perPr + ' 条</b>。';
+}
+
+function pickRadio(el){
+  el.parentNode.querySelectorAll('.radio').forEach(function(r){r.classList.remove('on')});
+  el.classList.add('on');
+}
+
+/* ---- hash routing (#pr / #dash / #settings / #pricing / #demo) ---- */
+(function(){
+  function apply(){
+    var h = location.hash.replace('#','');
+    if(!h) return;
+    var t = document.querySelector('.tab[data-v="' + h + '"]');
+    if(t) t.click();
+  }
+  window.addEventListener('hashchange', apply);
+  apply();
+})();
+</script>
+</body>
+</html>
